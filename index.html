@@ -3,541 +3,695 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lark Base Weighted Metric - Tỷ lệ Quảng cáo</title>
+  <title>Lark Dashboard Weighted Ratio Extension</title>
   <style>
     :root {
-      --bg-color: #ffffff;
-      --text-primary: #1f2329;
-      --text-secondary: #646a73;
-      --text-muted: #8f959e;
+      --bg-card: #ffffff;
+      --text-title: #646a73;
+      --text-main: #1f2329;
+      --text-sub: #8f959e;
       --border-color: #dee0e3;
-      --accent-color: #3370ff;
-      --accent-hover: #245bdb;
-      --danger-color: #f54a45;
-      --panel-bg: #f8f9fa;
+      --primary: #3370ff;
+      --primary-hover: #245bdb;
     }
-
-    body[data-theme="dark"] {
-      --bg-color: #191919;
-      --text-primary: #f0f0f0;
-      --text-secondary: #a6a6a6;
-      --text-muted: #757575;
-      --border-color: #303030;
-      --panel-bg: #242424;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
     }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
     html, body {
       width: 100%;
       height: 100%;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-primary);
+      background: var(--bg-card);
+      color: var(--text-main);
       overflow: hidden;
     }
-
-    .app-container {
+    #app {
       display: flex;
       width: 100%;
       height: 100%;
     }
 
-    /* THẺ METRIC HIỂN THỊ TRÊN DASHBOARD */
-    .metric-card {
+    /* Khu vực hiển thị thẻ Metric */
+    .preview-pane {
       flex: 1;
       display: flex;
       flex-direction: column;
       justify-content: center;
       padding: 14px 18px;
       min-width: 0;
+      overflow: hidden;
+      position: relative;
     }
-
     .metric-label {
       font-size: 13px;
       font-weight: 600;
-      color: var(--text-secondary);
+      color: var(--text-title);
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       margin-bottom: 6px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      letter-spacing: 0.2px;
     }
-
     .metric-value {
-      font-size: clamp(24px, 5vw, 36px);
+      font-size: clamp(24px, 14vw, 36px);
       font-weight: 700;
-      color: var(--text-primary);
+      color: var(--text-main);
       line-height: 1.15;
-      font-variant-numeric: tabular-nums;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      font-variant-numeric: tabular-nums;
     }
-
-    .metric-value.err {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--danger-color);
-      white-space: normal;
-    }
-
     .metric-sub {
-      font-size: 11.5px;
-      color: var(--text-muted);
       margin-top: 6px;
-      font-variant-numeric: tabular-nums;
+      font-size: 11px;
+      color: var(--text-sub);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    .unconfigured-badge {
+      display: none;
+      margin-top: 6px;
+      padding: 4px 8px;
+      background: #fff7e6;
+      border: 1px solid #ffd591;
+      border-radius: 4px;
+      color: #d46b08;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+    .unconfigured-badge.visible {
+      display: inline-block;
+    }
 
-    /* PANEL CHỌN NGUỒN (CHỈ HIỆN Ở TRẠNG THÁI CREATE / CONFIG) */
-    .config-panel {
-      width: 320px;
+    /* Khu vực cấu hình bên phải (chỉ hiện ở chế độ Create / Config) */
+    .config-pane {
+      width: 330px;
       border-left: 1px solid var(--border-color);
-      background-color: var(--panel-bg);
       padding: 16px;
       display: none;
       flex-direction: column;
       gap: 12px;
       overflow-y: auto;
+      background: #fafbfc;
     }
-
-    .app-container.is-config .config-panel {
+    #app.is-config .config-pane {
       display: flex;
     }
-
-    .config-title {
+    .config-header {
       font-size: 14px;
       font-weight: 600;
-      color: var(--text-primary);
+      color: var(--text-main);
       padding-bottom: 8px;
       border-bottom: 1px solid var(--border-color);
     }
-
     .form-group {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 5px;
     }
-
     .form-group label {
       font-size: 12px;
       font-weight: 600;
-      color: var(--text-secondary);
+      color: var(--text-title);
     }
-
-    .form-group select,
-    .form-group input {
+    .form-hint {
+      font-size: 11px;
+      color: var(--text-sub);
+      line-height: 1.35;
+    }
+    .form-control {
       width: 100%;
-      padding: 8px 10px;
+      padding: 7px 10px;
       font-size: 13px;
       border: 1px solid var(--border-color);
       border-radius: 6px;
-      background-color: var(--bg-color);
-      color: var(--text-primary);
+      background: #fff;
+      color: var(--text-main);
       outline: none;
+      transition: border-color 0.15s;
     }
-
-    .form-group select:focus,
-    .form-group input:focus {
-      border-color: var(--accent-color);
+    .form-control:focus {
+      border-color: var(--primary);
     }
-
-    .hint-box {
-      font-size: 11.5px;
-      line-height: 1.45;
-      color: var(--text-secondary);
-      background: rgba(51, 112, 255, 0.08);
-      border-radius: 6px;
-      padding: 8px 10px;
+    .row-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
     }
-
+    .checkbox-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-main);
+      cursor: pointer;
+      user-select: none;
+    }
     .btn-save {
       margin-top: auto;
       padding: 10px 14px;
+      background: var(--primary);
+      color: #fff;
       font-size: 13px;
       font-weight: 600;
-      color: #ffffff;
-      background-color: var(--accent-color);
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      transition: background 0.15s;
     }
-
-    .btn-save:hover { background-color: var(--accent-hover); }
-    .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-save:hover {
+      background: var(--primary-hover);
+    }
+    .btn-save:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .error-msg {
+      color: #f54a45;
+      font-size: 12px;
+      margin-top: 4px;
+      white-space: pre-wrap;
+    }
   </style>
 </head>
 <body>
-  <div class="app-container" id="app-container">
-    <!-- Khối hiển thị Thẻ Metric -->
-    <div class="metric-card">
-      <div class="metric-label" id="metric-label">TỶ LỆ QUẢNG CÁO</div>
-      <div class="metric-value" id="metric-val">Đang tải...</div>
-      <div class="metric-sub" id="metric-sub"></div>
+  <div id="app">
+    <!-- Màn hình hiển thị thẻ tỷ lệ -->
+    <div class="preview-pane">
+      <div class="metric-label" id="ui-title">TỶ LỆ QUẢNG CÁO</div>
+      <div class="metric-value" id="ui-value">--%</div>
+      <div class="metric-sub" id="ui-sub">Đang tải dữ liệu...</div>
+      <div class="unconfigured-badge" id="ui-badge">
+        ⚠️ Chưa liên kết Slicer: Bấm <b>"..."</b> góc phải khối ➔ <b>Cấu hình</b> ➔ <b>Lưu vào Dashboard</b>
+      </div>
+      <div class="error-msg" id="ui-error" style="display:none;"></div>
     </div>
 
-    <!-- Khối chọn Nguồn dữ liệu (Chỉ hiện khi Thêm mới hoặc bấm Cấu hình) -->
-    <div class="config-panel">
-      <div class="config-title">Cấu hình Nguồn & Công thức (∑A / ∑B)</div>
+    <!-- Bảng cấu hình (chỉ xuất hiện khi Thêm mới hoặc bấm Cấu hình) -->
+    <div class="config-pane">
+      <div class="config-header">Cấu hình Tỷ lệ Trọng số (ΣA / ΣB)</div>
 
       <div class="form-group">
-        <label for="cfg-table">1. Bảng dữ liệu nguồn</label>
-        <select id="cfg-table"></select>
-      </div>
-
-      <div class="form-group">
-        <label for="cfg-range">2. Phạm vi dữ liệu</label>
-        <select id="cfg-range"></select>
+        <label for="sel-table">1. Bảng dữ liệu nguồn</label>
+        <select id="sel-table" class="form-control"></select>
       </div>
 
       <div class="form-group">
-        <label for="cfg-num">3. Cột Tử số (∑ Chi phí Quảng cáo)</label>
-        <select id="cfg-num"></select>
+        <label for="sel-group">2. Trường phân nhóm (Bắt buộc để Slicer nhận diện)</label>
+        <select id="sel-group" class="form-control"></select>
+        <div class="form-hint">Chọn <b>TÊN SHOP</b> (hoặc cột phân loại bất kỳ) để Lark kích hoạt liên kết với mọi bộ lọc Slicer trên Dashboard.</div>
       </div>
 
       <div class="form-group">
-        <label for="cfg-den">4. Cột Mẫu số (∑ Doanh thu thuần)</label>
-        <select id="cfg-den"></select>
+        <label for="sel-num">3. Tử số — Tổng A (VD: CHI PHÍ ADS BAO GỒM VAT)</label>
+        <select id="sel-num" class="form-control"></select>
       </div>
 
       <div class="form-group">
-        <label for="cfg-title">5. Tiêu đề thẻ</label>
-        <input type="text" id="cfg-title" value="TỶ LỆ QUẢNG CÁO" />
+        <label for="sel-den">4. Mẫu số — Tổng B (VD: DOANH THU THUẦN)</label>
+        <select id="sel-den" class="form-control"></select>
       </div>
 
-      <div class="hint-box">
-        💡 Sau khi bấm <b>Lưu cấu hình</b>, đừng quên kiểm tra các bộ lọc Slicer (<b>SHOP</b>, <b>THỜI GIAN</b>) trên Dashboard đã tick chọn áp dụng cho khối này nhé!
+      <div class="form-group">
+        <label for="inp-title">5. Tiêu đề thẻ</label>
+        <input id="inp-title" type="text" class="form-control" value="TỶ LỆ QUẢNG CÁO" />
       </div>
 
-      <button class="btn-save" id="btn-save">Xác nhận & Lưu cấu hình</button>
+      <div class="row-2col">
+        <div class="form-group">
+          <label for="sel-decimals">Số lẻ thập phân</label>
+          <select id="sel-decimals" class="form-control">
+            <option value="2" selected>2 chữ số (29,34%)</option>
+            <option value="1">1 chữ số (29,3%)</option>
+            <option value="0">Làm tròn (29%)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="inp-color">Màu chữ chính</label>
+          <input id="inp-color" type="color" class="form-control" value="#1f2329" style="height:34px;padding:3px 6px;" />
+        </div>
+      </div>
+
+      <label class="checkbox-line">
+        <input type="checkbox" id="chk-sub" checked />
+        Hiển thị dòng phụ (Tổng Ads / Tổng Doanh thu)
+      </label>
+
+      <button id="btn-save" class="btn-save">Lưu vào Dashboard</button>
     </div>
   </div>
 
   <script type="module">
-    async function loadBitableSDK() {
-      for (const url of [
-        'https://cdn.jsdelivr.net/npm/@lark-base-open/js-sdk@1.0.2/+esm',
-        'https://esm.sh/@lark-base-open/js-sdk@1.0.2'
-      ]) {
-        try { return await import(url); } catch (_) {}
+    let sdk;
+    try {
+      sdk = await import('https://cdn.jsdelivr.net/npm/@lark-base-open/js-sdk@1.0.2/+esm');
+    } catch (e) {
+      sdk = await import('https://esm.sh/@lark-base-open/js-sdk@1.0.2');
+    }
+
+    const {
+      bitable,
+      DashboardState,
+      Rollup,
+      SourceType,
+      GroupMode,
+      ORDER,
+      DATA_SOURCE_SORT_TYPE
+    } = sdk;
+
+    const dashboard = bitable.dashboard;
+    const base = bitable.base;
+
+    const appEl = document.getElementById('app');
+    const uiTitle = document.getElementById('ui-title');
+    const uiValue = document.getElementById('ui-value');
+    const uiSub = document.getElementById('ui-sub');
+    const uiBadge = document.getElementById('ui-badge');
+    const uiError = document.getElementById('ui-error');
+
+    const selTable = document.getElementById('sel-table');
+    const selGroup = document.getElementById('sel-group');
+    const selNum = document.getElementById('sel-num');
+    const selDen = document.getElementById('sel-den');
+    const inpTitle = document.getElementById('inp-title');
+    const selDecimals = document.getElementById('sel-decimals');
+    const inpColor = document.getElementById('inp-color');
+    const chkSub = document.getElementById('chk-sub');
+    const btnSave = document.getElementById('btn-save');
+
+    let currentConfig = {
+      tableId: '',
+      groupFieldId: '',
+      numFieldId: '',
+      denFieldId: '',
+      title: 'TỶ LỆ QUẢNG CÁO',
+      decimals: 2,
+      color: '#1f2329',
+      showSub: true
+    };
+
+    function showError(msg) {
+      if (!msg) {
+        uiError.style.display = 'none';
+        uiError.textContent = '';
+      } else {
+        uiError.style.display = 'block';
+        uiError.textContent = msg;
       }
-      throw new Error('Không thể tải @lark-base-open/js-sdk từ CDN.');
     }
 
-    const appEl = document.getElementById('app-container');
-    const labelEl = document.getElementById('metric-label');
-    const valEl = document.getElementById('metric-val');
-    const subEl = document.getElementById('metric-sub');
-
-    const tableSelect = document.getElementById('cfg-table');
-    const rangeSelect = document.getElementById('cfg-range');
-    const numSelect = document.getElementById('cfg-num');
-    const denSelect = document.getElementById('cfg-den');
-    const titleInput = document.getElementById('cfg-title');
-    const saveBtn = document.getElementById('btn-save');
-
-    const vnNumFmt = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 });
-    const vnPctFmt = new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const norm = (s) => String(s || '').normalize('NFC').trim().toUpperCase();
-
-    function renderMetric(adsVal, revVal, title) {
-      if (title) labelEl.textContent = title;
-      const a = typeof adsVal === 'number' ? adsVal : (parseFloat(String(adsVal ?? '0')) || 0);
-      const b = typeof revVal === 'number' ? revVal : (parseFloat(String(revVal ?? '0')) || 0);
-      const ratio = b > 0 ? (a / b) * 100 : 0;
-
-      valEl.className = 'metric-value';
-      valEl.textContent = `${vnPctFmt.format(ratio)}%`;
-      subEl.textContent = `Ads: ${vnNumFmt.format(a)} / DT: ${vnNumFmt.format(b)}`;
+    function toNumber(val) {
+      if (typeof val === 'number') return Number.isFinite(val) ? val : 0;
+      if (val === null || val === undefined || val === '') return 0;
+      if (typeof val === 'object') {
+        if ('value' in val) return toNumber(val.value);
+        if (Array.isArray(val)) return val.reduce((s, x) => s + toNumber(x), 0);
+      }
+      const n = Number(val);
+      if (Number.isFinite(n)) return n;
+      const cleaned = String(val).replace(/[^0-9.-]+/g, '');
+      const parsed = parseFloat(cleaned);
+      return Number.isFinite(parsed) ? parsed : 0;
     }
 
-    // Tạo IDataCondition chuẩn (TUYỆT ĐỐI KHÔNG CÓ groups: [] để không bị lỗi "Nguồn dữ liệu đã thay đổi")
-    function createCondition(tableId, dataRangeObj, numFieldId, denFieldId, Rollup, SourceType) {
-      const sumRollup = Rollup?.SUM || 'SUM';
-      const validRange = dataRangeObj || { type: SourceType?.ALL || 'ALL' };
-      return {
-        tableId,
-        dataRange: validRange,
-        series: [
-          { fieldId: numFieldId, rollup: sumRollup },
-          { fieldId: denFieldId, rollup: sumRollup }
-        ]
+    /**
+     * Xây dựng IDataCondition chuẩn theo kiến trúc Lark-Base-Team/indicator-card:
+     * BẮT BUỘC có `groups` hợp lệ để Lark Dashboard tạo `dataMeta` và cho phép Slicer liên kết.
+     */
+    function buildCondition(cfg) {
+      const isSameField = cfg.numFieldId === cfg.denFieldId;
+      const series = isSameField
+        ? [{ fieldId: cfg.numFieldId, rollup: (Rollup && Rollup.SUM) ? Rollup.SUM : 'SUM' }]
+        : [
+            { fieldId: cfg.numFieldId, rollup: (Rollup && Rollup.SUM) ? Rollup.SUM : 'SUM' },
+            { fieldId: cfg.denFieldId, rollup: (Rollup && Rollup.SUM) ? Rollup.SUM : 'SUM' }
+          ];
+
+      const condition = {
+        tableId: cfg.tableId,
+        dataRange: { type: (SourceType && SourceType.ALL) ? SourceType.ALL : 'ALL' },
+        series
       };
+
+      if (cfg.groupFieldId) {
+        condition.groups = [
+          {
+            fieldId: cfg.groupFieldId,
+            mode: (GroupMode && GroupMode.ENUMERATED) ? GroupMode.ENUMERATED : 'enumerated',
+            sort: {
+              order: (ORDER && ORDER.ASCENDING) ? ORDER.ASCENDING : 1,
+              sortType: (DATA_SOURCE_SORT_TYPE && DATA_SOURCE_SORT_TYPE.VALUE) ? DATA_SOURCE_SORT_TYPE.VALUE : 'VALUE'
+            }
+          }
+        ];
+      }
+
+      return condition;
     }
 
-    // Tự động chọn đúng cột CHI PHÍ ADS BAO GỒM VAT và DOANH THU THUẦN trong bảng
-    function findBestDefaultFields(fields) {
-      const adsField =
-        fields.find(f => norm(f.name) === 'CHI PHÍ ADS BAO GỒM VAT') ||
-        fields.find(f => norm(f.name).startsWith('CHI PHÍ ADS')) ||
-        fields.find(f => norm(f.name).startsWith('CHI PHÍ QUẢNG CÁO')) ||
-        fields.find(f => norm(f.name).includes('CHI PHÍ')) ||
-        fields[0];
+    /**
+     * Cộng tổng Tử số và Mẫu số trên toàn bộ các dòng trả về từ Lark Dashboard
+     * (Hỗ trợ cả bảng đã phân nhóm theo `groups` lẫn bảng không phân nhóm)
+     */
+    function extractTotals(data, cfg) {
+      if (!Array.isArray(data) || data.length < 2) {
+        return { num: 0, den: 0 };
+      }
 
-      const revField =
-        fields.find(f => norm(f.name) === 'DOANH THU THUẦN') ||
-        fields.find(f => norm(f.name).includes('DOANH THU THUẦN')) ||
-        fields.find(f => norm(f.name) === 'NMV') ||
-        fields.find(f => norm(f.name) === 'GMV') ||
-        fields.find(f => f.id !== adsField?.id) ||
-        fields[0];
+      const isSameField = cfg && cfg.numFieldId && cfg.numFieldId === cfg.denFieldId;
+      const hasGroup = Boolean(cfg && cfg.groupFieldId);
 
-      return {
-        adsFieldId: adsField?.id || '',
-        revFieldId: revField?.id || ''
-      };
-    }
+      let totalNum = 0;
+      let totalDen = 0;
 
-    // Lọc bỏ các cột chữ/ngày tháng (như TÊN SHOP, NGÀY, THÁNG) để tránh chọn nhầm gây lỗi SUM
-    function filterValidNumericFields(fieldMetaList, FieldType) {
-      const numericTypes = new Set([
-        FieldType?.Number ?? 2,
-        FieldType?.Formula ?? 20,
-        FieldType?.Lookup ?? 19,
-        FieldType?.Currency ?? 99003,
-        FieldType?.Progress ?? 99002,
-        FieldType?.Rating ?? 99004
-      ]);
-      const filtered = fieldMetaList.filter(f => {
-        const n = norm(f.name);
-        if (n === 'TÊN SHOP' || n === 'SHOP' || n.startsWith('NGÀY') || n.startsWith('THÁNG')) {
-          return false;
+      // Dòng 0 là Header, dữ liệu bắt đầu từ dòng 1 (giống hệt data.slice(1) trong indicator-card)
+      for (let r = 1; r < data.length; r++) {
+        const row = data[r];
+        if (!Array.isArray(row) || row.length === 0) continue;
+
+        if (hasGroup && row.length >= 2) {
+          // row[0] = Group (VD: Tên Shop), row[1] = Series 0 (Tử số), row[2] = Series 1 (Mẫu số)
+          const numVal = toNumber(row[1]?.value);
+          const denVal = isSameField ? numVal : toNumber(row[2]?.value);
+          totalNum += numVal;
+          totalDen += denVal;
+        } else {
+          // Trường hợp không có cột group: row[0] = Tử số, row[1] = Mẫu số
+          const numVal = toNumber(row[0]?.value);
+          const denVal = (isSameField || row.length < 2) ? numVal : toNumber(row[1]?.value);
+          totalNum += numVal;
+          totalDen += denVal;
         }
-        return numericTypes.has(f.type);
-      });
-      return filtered.length >= 2 ? filtered : fieldMetaList;
+      }
+
+      return { num: totalNum, den: totalDen };
     }
 
-    async function main() {
+    function renderMetric(num, den, cfg) {
+      showError('');
+      const title = (cfg && cfg.title) ? cfg.title : 'TỶ LỆ QUẢNG CÁO';
+      const decimals = Number.isFinite(Number(cfg?.decimals)) ? Number(cfg.decimals) : 2;
+      const color = cfg?.color || '#1f2329';
+      const showSub = cfg?.showSub !== undefined ? Boolean(cfg.showSub) : true;
+
+      uiTitle.textContent = title;
+      uiValue.style.color = color;
+
+      const ratio = den !== 0 ? (num / den) * 100 : 0;
+      uiValue.textContent = ratio.toLocaleString('vi-VN', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      }) + '%';
+
+      if (showSub) {
+        uiSub.style.display = 'block';
+        const fmtNum = Math.round(num).toLocaleString('vi-VN');
+        const fmtDen = Math.round(den).toLocaleString('vi-VN');
+        uiSub.textContent = `Ads: ${fmtNum} / DT: ${fmtDen}`;
+      } else {
+        uiSub.style.display = 'none';
+      }
+
+      if (dashboard && typeof dashboard.setRendered === 'function') {
+        dashboard.setRendered();
+      }
+    }
+
+    async function loadTables() {
+      const tableList = await base.getTableList();
+      selTable.innerHTML = '';
+      let preferredId = '';
+
+      for (const t of tableList) {
+        const name = await t.getName();
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = name;
+        selTable.appendChild(opt);
+        if (/tracking\s*all/i.test(name)) {
+          preferredId = t.id;
+        }
+      }
+
+      if (!currentConfig.tableId) {
+        currentConfig.tableId = preferredId || (tableList[0] ? tableList[0].id : '');
+      }
+      selTable.value = currentConfig.tableId;
+    }
+
+    async function loadFields(tableId) {
+      if (!tableId) return;
+      const table = await base.getTableById(tableId);
+      const fieldMetaList = await table.getFieldMetaList();
+
+      selGroup.innerHTML = '';
+      selNum.innerHTML = '';
+      selDen.innerHTML = '';
+
+      let autoGroupId = '';
+      let autoNumId = '';
+      let autoDenId = '';
+
+      for (const f of fieldMetaList) {
+        const optG = document.createElement('option');
+        optG.value = f.id;
+        optG.textContent = f.name;
+        selGroup.appendChild(optG);
+
+        const optN = document.createElement('option');
+        optN.value = f.id;
+        optN.textContent = f.name;
+        selNum.appendChild(optN);
+
+        const optD = document.createElement('option');
+        optD.value = f.id;
+        optD.textContent = f.name;
+        selDen.appendChild(optD);
+
+        const norm = f.name.trim().toLowerCase();
+
+        // Tự động nhận diện cột phân nhóm: ưu tiên "TÊN SHOP" / "SHOP"
+        if (!autoGroupId && (norm.includes('tên shop') || norm === 'shop')) {
+          autoGroupId = f.id;
+        }
+
+        // Tự động nhận diện Tử số: ưu tiên "CHI PHÍ ADS BAO GỒM VAT" / "CHI PHÍ"
+        if (norm.includes('chi phí ads') || norm.includes('chi phi ads')) {
+          autoNumId = f.id;
+        } else if (!autoNumId && (norm.includes('chi phí') || norm.includes('chi phi'))) {
+          autoNumId = f.id;
+        }
+
+        // Tự động nhận diện Mẫu số: ưu tiên "DOANH THU THUẦN"
+        if (norm.includes('doanh thu thuần') || norm.includes('doanh thu thuan')) {
+          autoDenId = f.id;
+        } else if (!autoDenId && (norm === 'nmv' || norm.includes('doanh thu'))) {
+          autoDenId = f.id;
+        }
+      }
+
+      const validIds = new Set(fieldMetaList.map(f => f.id));
+
+      if (!currentConfig.groupFieldId || !validIds.has(currentConfig.groupFieldId)) {
+        currentConfig.groupFieldId = autoGroupId || (fieldMetaList[0]?.id ?? '');
+      }
+      if (!currentConfig.numFieldId || !validIds.has(currentConfig.numFieldId)) {
+        currentConfig.numFieldId = autoNumId || (fieldMetaList[0]?.id ?? '');
+      }
+      if (!currentConfig.denFieldId || !validIds.has(currentConfig.denFieldId)) {
+        currentConfig.denFieldId = autoDenId || (fieldMetaList[Math.min(1, fieldMetaList.length - 1)]?.id ?? '');
+      }
+
+      selGroup.value = currentConfig.groupFieldId;
+      selNum.value = currentConfig.numFieldId;
+      selDen.value = currentConfig.denFieldId;
+    }
+
+    async function autoDetectConfigIfNeeded() {
+      const tableList = await base.getTableList();
+      let targetTable = tableList[0];
+      for (const t of tableList) {
+        const name = await t.getName();
+        if (/tracking\s*all/i.test(name)) {
+          targetTable = t;
+          break;
+        }
+      }
+      if (!targetTable) return;
+
+      currentConfig.tableId = targetTable.id;
+      const fields = await targetTable.getFieldMetaList();
+
+      let gId = fields[0]?.id || '';
+      let nId = fields[0]?.id || '';
+      let dId = fields[1]?.id || fields[0]?.id || '';
+
+      for (const f of fields) {
+        const norm = f.name.trim().toLowerCase();
+        if (norm.includes('tên shop') || norm === 'shop') gId = f.id;
+        if (norm.includes('chi phí ads') || norm.includes('chi phi ads')) nId = f.id;
+        if (norm.includes('doanh thu thuần') || norm.includes('doanh thu thuan')) dId = f.id;
+      }
+
+      currentConfig.groupFieldId = gId;
+      currentConfig.numFieldId = nId;
+      currentConfig.denFieldId = dId;
+    }
+
+    async function updatePreview() {
       try {
-        const sdk = await loadBitableSDK();
-        const { bitable, DashboardState, Rollup, SourceType, FieldType } = sdk;
-        const { dashboard, base } = bitable;
+        currentConfig.tableId = selTable.value;
+        currentConfig.groupFieldId = selGroup.value;
+        currentConfig.numFieldId = selNum.value;
+        currentConfig.denFieldId = selDen.value;
+        currentConfig.title = inpTitle.value.trim() || 'TỶ LỆ QUẢNG CÁO';
+        currentConfig.decimals = parseInt(selDecimals.value, 10) || 2;
+        currentConfig.color = inpColor.value || '#1f2329';
+        currentConfig.showSub = chkSub.checked;
 
-        // Đồng bộ theme Sáng / Tối
+        if (!currentConfig.tableId || !currentConfig.numFieldId || !currentConfig.denFieldId) return;
+
+        const condition = buildCondition(currentConfig);
+        const data = await dashboard.getPreviewData(condition);
+        const { num, den } = extractTotals(data, currentConfig);
+        renderMetric(num, den, currentConfig);
+      } catch (err) {
+        console.error('updatePreview error:', err);
+        showError('Lỗi xem trước: ' + (err.message || String(err)));
+      }
+    }
+
+    async function fetchAndRenderViewData() {
+      try {
+        const data = await dashboard.getData();
+        uiBadge.classList.remove('visible');
+        const { num, den } = extractTotals(data, currentConfig);
+        renderMetric(num, den, currentConfig);
+      } catch (err) {
+        console.warn('getData() chưa có dataMeta, chuyển sang chế độ Preview tạm thời:', err);
+        // Nếu khối chưa được bấm "Lưu vào Dashboard" lần đầu (lỗi no dataMeta),
+        // tự động dò bảng TRACKING ALL và hiển thị dữ liệu qua getPreviewData để không bị lỗi đỏ
         try {
-          const initTheme = await dashboard.getTheme();
-          document.body.setAttribute('data-theme', (initTheme?.theme || '').toLowerCase() === 'dark' ? 'dark' : 'light');
-          dashboard.onThemeChange(ev => {
-            document.body.setAttribute('data-theme', (ev.data?.theme || '').toLowerCase() === 'dark' ? 'dark' : 'light');
-          });
-        } catch (_) {}
+          if (!currentConfig.tableId || !currentConfig.numFieldId || !currentConfig.denFieldId) {
+            await autoDetectConfigIfNeeded();
+          }
+          const condition = buildCondition(currentConfig);
+          const previewData = await dashboard.getPreviewData(condition);
+          uiBadge.classList.add('visible');
+          const { num, den } = extractTotals(previewData, currentConfig);
+          renderMetric(num, den, currentConfig);
+        } catch (fallbackErr) {
+          showError('Vui lòng bấm "..." góc phải khối -> Cấu hình -> Lưu vào Dashboard.');
+        }
+      }
+    }
 
+    async function init() {
+      try {
         const state = dashboard.state;
-        const isConfigMode =
-          state === DashboardState.Create ||
-          state === DashboardState.Config ||
-          window.location.href.includes('isCreate=1') ||
-          window.location.href.includes('isConfig=1');
+        const isCreate = state === DashboardState.Create || state === 'Create';
+        const isConfig = state === DashboardState.Config || state === 'Config';
 
-        if (isConfigMode) {
+        if (!isCreate) {
+          try {
+            const saved = await dashboard.getConfig();
+            if (saved && saved.customConfig) {
+              currentConfig = { ...currentConfig, ...saved.customConfig };
+            }
+            if (saved && Array.isArray(saved.dataConditions) && saved.dataConditions[0]) {
+              const dc = saved.dataConditions[0];
+              if (dc.tableId) currentConfig.tableId = dc.tableId;
+              if (dc.groups?.[0]?.fieldId) currentConfig.groupFieldId = dc.groups[0].fieldId;
+              if (dc.series?.[0]?.fieldId) currentConfig.numFieldId = dc.series[0].fieldId;
+              if (dc.series?.[1]?.fieldId) currentConfig.denFieldId = dc.series[1].fieldId;
+            }
+          } catch (e) {
+            console.warn('Chưa có config đã lưu:', e);
+          }
+        }
+
+        if (isCreate || isConfig) {
           appEl.classList.add('is-config');
-          await initConfigMode({ base, dashboard, DashboardState, Rollup, SourceType, FieldType });
+          uiBadge.classList.remove('visible');
+
+          inpTitle.value = currentConfig.title || 'TỶ LỆ QUẢNG CÁO';
+          selDecimals.value = String(currentConfig.decimals ?? 2);
+          inpColor.value = currentConfig.color || '#1f2329';
+          chkSub.checked = currentConfig.showSub !== false;
+
+          await loadTables();
+          await loadFields(currentConfig.tableId);
+          await updatePreview();
+
+          selTable.addEventListener('change', async () => {
+            currentConfig.tableId = selTable.value;
+            currentConfig.groupFieldId = '';
+            currentConfig.numFieldId = '';
+            currentConfig.denFieldId = '';
+            await loadFields(currentConfig.tableId);
+            await updatePreview();
+          });
+
+          selGroup.addEventListener('change', updatePreview);
+          selNum.addEventListener('change', updatePreview);
+          selDen.addEventListener('change', updatePreview);
+          inpTitle.addEventListener('input', updatePreview);
+          selDecimals.addEventListener('change', updatePreview);
+          inpColor.addEventListener('input', updatePreview);
+          chkSub.addEventListener('change', updatePreview);
+
+          btnSave.addEventListener('click', async () => {
+            btnSave.disabled = true;
+            btnSave.textContent = 'Đang lưu...';
+            try {
+              const condition = buildCondition(currentConfig);
+              await dashboard.saveConfig({
+                customConfig: { ...currentConfig },
+                dataConditions: [condition]
+              });
+            } catch (err) {
+              console.error('saveConfig error:', err);
+              showError('Lỗi khi lưu: ' + (err.message || String(err)));
+              btnSave.disabled = false;
+              btnSave.textContent = 'Lưu vào Dashboard';
+            }
+          });
         } else {
           appEl.classList.remove('is-config');
-          await initViewMode({ dashboard });
+          await fetchAndRenderViewData();
         }
-      } catch (err) {
-        valEl.className = 'metric-value err';
-        valEl.textContent = 'Lỗi khởi tạo: ' + (err?.message || String(err));
-      }
-    }
 
-    // ================= CHẾ ĐỘ CẤU HÌNH (CREATE / CONFIG) =================
-    async function initConfigMode({ base, dashboard, DashboardState, Rollup, SourceType, FieldType }) {
-      const tableMetaList = await base.getTableMetaList();
-      tableSelect.innerHTML = tableMetaList
-        .map(t => `<option value="${t.id}">${t.name}</option>`)
-        .join('');
-
-      // Ưu tiên bảng TRACKING ALL
-      const defaultTable =
-        tableMetaList.find(t => norm(t.name).includes('TRACKING ALL')) ||
-        tableMetaList.find(t => norm(t.name).includes('TRACKING')) ||
-        tableMetaList[0];
-
-      let currentTableId = defaultTable?.id || '';
-      let currentRangeJson = '';
-      let currentNumId = '';
-      let currentDenId = '';
-      let currentTitle = 'TỶ LỆ QUẢNG CÁO';
-
-      // Nếu đang bấm sửa cấu hình đã lưu -> nạp lại cấu hình cũ (nếu hợp lệ)
-      if (dashboard.state === DashboardState.Config) {
-        try {
-          const saved = await dashboard.getConfig();
-          const cond = saved?.dataConditions?.[0];
-          if (cond?.tableId && tableMetaList.some(t => t.id === cond.tableId)) {
-            currentTableId = cond.tableId;
-          }
-          if (cond?.dataRange) {
-            currentRangeJson = JSON.stringify(cond.dataRange);
-          }
-          if (Array.isArray(cond?.series) && cond.series.length >= 2) {
-            // Chỉ khôi phục nếu 2 cột cũ khác nhau (tránh lỗi trùng cột CLICK cũ)
-            if (cond.series[0].fieldId !== cond.series[1].fieldId) {
-              currentNumId = cond.series[0].fieldId;
-              currentDenId = cond.series[1].fieldId;
-            }
-          }
-          if (saved?.customConfig?.title) {
-            currentTitle = String(saved.customConfig.title);
-          }
-        } catch (_) {}
-      }
-
-      titleInput.value = currentTitle;
-      tableSelect.value = currentTableId;
-
-      async function loadTableFieldsAndRanges(tableId, useSavedSelection) {
-        const [dataRanges, table] = await Promise.all([
-          dashboard.getTableDataRange(tableId),
-          base.getTableById(tableId)
-        ]);
-        const rawFields = await table.getFieldMetaList();
-        const numericFields = filterValidNumericFields(rawFields, FieldType);
-
-        rangeSelect.innerHTML = dataRanges
-          .map(r => {
-            const label = r.type === (SourceType?.ALL || 'ALL') ? 'Tất cả dữ liệu' : `View: ${r.viewName || r.viewId}`;
-            return `<option value='${JSON.stringify(r)}'>${label}</option>`;
-          })
-          .join('');
-
-        const fieldOptions = numericFields
-          .map(f => `<option value="${f.id}">${f.name}</option>`)
-          .join('');
-        numSelect.innerHTML = fieldOptions;
-        denSelect.innerHTML = fieldOptions;
-
-        const defaults = findBestDefaultFields(numericFields);
-        numSelect.value = defaults.adsFieldId;
-        denSelect.value = defaults.revFieldId;
-
-        if (useSavedSelection) {
-          if (currentRangeJson && [...rangeSelect.options].some(o => o.value === currentRangeJson)) {
-            rangeSelect.value = currentRangeJson;
-          }
-          if (currentNumId && numericFields.some(f => f.id === currentNumId)) {
-            numSelect.value = currentNumId;
-          }
-          if (currentDenId && numericFields.some(f => f.id === currentDenId)) {
-            denSelect.value = currentDenId;
-          }
-        }
-      }
-
-      async function updatePreview() {
-        const tId = tableSelect.value;
-        const aId = numSelect.value;
-        const bId = denSelect.value;
-        const title = titleInput.value.trim() || 'TỶ LỆ QUẢNG CÁO';
-        if (!tId || !aId || !bId) return;
-
-        let rangeObj = { type: SourceType?.ALL || 'ALL' };
-        try { rangeObj = JSON.parse(rangeSelect.value); } catch (_) {}
-
-        try {
-          const cond = createCondition(tId, rangeObj, aId, bId, Rollup, SourceType);
-          const pData = await dashboard.getPreviewData(cond);
-
-          if (Array.isArray(pData?.[1]) && pData[1].length >= 2) {
-            renderMetric(pData[1][0]?.value, pData[1][1]?.value, title);
+        // Tự động tính lại mỗi khi bất kỳ Slicer nào trên Dashboard thay đổi
+        dashboard.onDataChange(async (res) => {
+          const data = res?.data ?? res;
+          if (Array.isArray(data) && data.length >= 2) {
+            uiBadge.classList.remove('visible');
+            const { num, den } = extractTotals(data, currentConfig);
+            renderMetric(num, den, currentConfig);
           } else {
-            // Nếu 2 cột trùng nhau hoặc cần lấy riêng lẻ
-            const sumRollup = Rollup?.SUM || 'SUM';
-            const [resA, resB] = await Promise.all([
-              dashboard.getPreviewData({ tableId: tId, dataRange: rangeObj, series: [{ fieldId: aId, rollup: sumRollup }] }),
-              dashboard.getPreviewData({ tableId: tId, dataRange: rangeObj, series: [{ fieldId: bId, rollup: sumRollup }] })
-            ]);
-            renderMetric(resA?.[1]?.[0]?.value, resB?.[1]?.[0]?.value, title);
+            await fetchAndRenderViewData();
           }
-        } catch (err) {
-          console.error('Preview error:', err);
-        }
+        });
+
+        dashboard.onConfigChange(async (res) => {
+          const cfg = res?.data ?? res;
+          if (cfg?.customConfig) {
+            currentConfig = { ...currentConfig, ...cfg.customConfig };
+          }
+          await fetchAndRenderViewData();
+        });
+      } catch (err) {
+        console.error('Init error:', err);
+        showError('Lỗi khởi tạo: ' + (err.message || String(err)));
       }
-
-      await loadTableFieldsAndRanges(currentTableId, true);
-      await updatePreview();
-
-      tableSelect.addEventListener('change', async () => {
-        await loadTableFieldsAndRanges(tableSelect.value, false);
-        await updatePreview();
-      });
-      rangeSelect.addEventListener('change', updatePreview);
-      numSelect.addEventListener('change', updatePreview);
-      denSelect.addEventListener('change', updatePreview);
-      titleInput.addEventListener('input', () => {
-        labelEl.textContent = titleInput.value.trim() || 'TỶ LỆ QUẢNG CÁO';
-      });
-
-      saveBtn.addEventListener('click', async () => {
-        if (numSelect.value === denSelect.value) {
-          alert('Cột Tử số và Cột Mẫu số không được trùng nhau! Vui lòng chọn 2 cột khác nhau.');
-          return;
-        }
-        saveBtn.disabled = true;
-        saveBtn.textContent = 'Đang lưu...';
-        try {
-          let rangeObj = { type: SourceType?.ALL || 'ALL' };
-          try { rangeObj = JSON.parse(rangeSelect.value); } catch (_) {}
-
-          const condition = createCondition(
-            tableSelect.value,
-            rangeObj,
-            numSelect.value,
-            denSelect.value,
-            Rollup,
-            SourceType
-          );
-
-          await dashboard.saveConfig({
-            dataConditions: [condition],
-            customConfig: {
-              title: titleInput.value.trim() || 'TỶ LỆ QUẢNG CÁO'
-            }
-          });
-        } catch (err) {
-          alert('Lỗi khi lưu: ' + (err?.message || err));
-          saveBtn.disabled = false;
-          saveBtn.textContent = 'Xác nhận & Lưu cấu hình';
-        }
-      });
     }
 
-    // ================= CHẾ ĐỘ HIỂN THỊ TRÊN DASHBOARD (VIEW / FULLSCREEN) =================
-    async function initViewMode({ dashboard }) {
-      let title = 'TỶ LỆ QUẢNG CÁO';
-
-      async function renderFromDashboard(incomingData) {
-        try {
-          const cfg = await dashboard.getConfig();
-          if (cfg?.customConfig?.title) {
-            title = String(cfg.customConfig.title);
-          }
-        } catch (_) {}
-
-        let data = incomingData;
-        if (!Array.isArray(data) || data.length < 2) {
-          data = await dashboard.getData();
-        }
-
-        const adsVal = data?.[1]?.[0]?.value ?? 0;
-        const revVal = data?.[1]?.[1]?.value ?? 0;
-        renderMetric(adsVal, revVal, title);
-        await dashboard.setRendered();
-      }
-
-      await renderFromDashboard();
-
-      // Lắng nghe sự kiện đổi Slicer Filter (SHOP, THỜI GIAN NGÀY, THỜI GIAN) theo thời gian thực
-      dashboard.onDataChange(ev => renderFromDashboard(ev?.data));
-      dashboard.onConfigChange(() => renderFromDashboard());
-    }
-
-    main();
+    init();
   </script>
 </body>
 </html>
