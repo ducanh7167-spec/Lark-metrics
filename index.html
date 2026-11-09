@@ -6,63 +6,99 @@
   <style>
     body {
       margin: 0;
-      padding: 12px 16px;
+      padding: 16px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: transparent;
+      background: #ffffff;
       box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
-    .title {
+    .label {
       font-size: 13px;
       font-weight: 600;
       color: #646a73;
-      letter-spacing: 0.5px;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
       margin-bottom: 6px;
     }
-    .value {
-      font-size: 28px;
+    .val {
+      font-size: 32px;
       font-weight: 700;
       color: #1f2329;
+    }
+    .sub {
+      font-size: 12px;
+      color: #8f959e;
+      margin-top: 4px;
+    }
+    .err {
+      color: #f54a45;
+      font-size: 13px;
     }
   </style>
 </head>
 <body>
-  <div class="title">TỶ LỆ QUẢNG CÁO</div>
-  <div class="value" id="val">Đang tính...</div>
+  <div class="label">TỶ LỆ QUẢNG CÁO (CHUẨN)</div>
+  <div class="val" id="metric-val">Đang quét dữ liệu...</div>
+  <div class="sub" id="metric-sub"></div>
 
   <script>
-    async function run() {
+    async function init() {
+      const valEl = document.getElementById('metric-val');
+      const subEl = document.getElementById('metric-sub');
+      
       try {
+        if (!window.bitable) {
+          valEl.innerText = 'Chờ SDK...';
+          return;
+        }
+
         const table = await window.bitable.base.getActiveTable();
+        const fieldMetaList = await table.getFieldMetaList();
+        
+        // Tự động tìm cột Ads và Doanh thu không phân biệt hoa thường
+        const adsMeta = fieldMetaList.find(f => {
+          const name = f.name.toLowerCase();
+          return name.includes('quảng cáo') || name.includes('ads') || name.includes('chi phí');
+        });
+
+        const revMeta = fieldMetaList.find(f => {
+          const name = f.name.toLowerCase();
+          return name.includes('doanh thu thuần') || name.includes('thuần') || name.includes('nmv');
+        });
+
+        if (!adsMeta || !revMeta) {
+          valEl.className = 'val err';
+          valEl.innerText = 'Không tìm thấy cột';
+          subEl.innerText = `Ads: ${adsMeta ? adsMeta.name : 'Chưa có'} | DT: ${revMeta ? revMeta.name : 'Chưa có'}`;
+          return;
+        }
+
+        const adsField = await table.getFieldById(adsMeta.id);
+        const revField = await table.getFieldById(revMeta.id);
+
         const view = await table.getActiveView();
         const recordIds = await view.getVisibleRecordIdList();
-
-        // Tên chính xác 2 cột trong Base của bạn
-        const adsField = await table.getFieldByName('CHI PHÍ QUẢNG CÁO (VND)');
-        const revField = await table.getFieldByName('DOANH THU THUẦN (VND)');
 
         let totalAds = 0;
         let totalRev = 0;
 
         for (const id of recordIds) {
-          const ads = await adsField.getValue(id);
-          const rev = await revField.getValue(id);
-          if (typeof ads === 'number') totalAds += ads;
-          if (typeof rev === 'number') totalRev += rev;
+          const a = await adsField.getValue(id);
+          const r = await revField.getValue(id);
+          
+          if (typeof a === 'number') totalAds += a;
+          else if (a && a.value) totalAds += Number(a.value) || 0;
+
+          if (typeof r === 'number') totalRev += r;
+          else if (r && r.value) totalRev += Number(r.value) || 0;
         }
 
-        const ratio = totalRev > 0 ? ((totalAds / totalRev) * 100).toFixed(2) + '%' : '0.00%';
-        document.getElementById('val').innerText = ratio;
-      } catch (e) {
-        document.getElementById('val').innerText = 'Lỗi tính toán';
-        console.error(e);
-      }
-    }
+        const ratio = totalRev > 0 ? ((totalAds / totalRev) * 100).toFixed(2) : '0.00';
+        
+        valEl.className = 'val';
+        valEl.innerText = ratio + '%';
+        subEl.innerText = `Ads: ${new Intl.NumberFormat('vi-VN').format(totalAds)} / DT: ${new Intl.NumberFormat('vi-VN').format(totalRev)}`;
 
-    if (window.bitable) {
-      window.bitable.base.onSelectionChange(run);
-      run();
-    }
-  </script>
-</body>
-</html>
+      } catch (err)
