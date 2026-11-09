@@ -3,42 +3,42 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lark Base Weighted Metric & Slicer</title>
+  <title>Lark Base Weighted Ratio Metric</title>
   <style>
     :root {
-      --bg-color: #ffffff;
       --text-main: #1f2329;
       --text-sub: #646a73;
       --text-muted: #8f959e;
       --border-color: #dee0e3;
       --primary: #3370ff;
-      --primary-bg: #e1eaff;
-      --card-bg: #ffffff;
-      --card-highlight: linear-gradient(135deg, #ffe8d6 0%, #fff4eb 100%);
-      --pill-bg: #f2f3f5;
-      --pill-active-bg: #ffffff;
+      --panel-bg: #ffffff;
+      --badge-ok-bg: #e8ffea;
+      --badge-ok-text: #00b42a;
+      --badge-warn-bg: #fff7e8;
+      --badge-warn-text: #ff7d00;
     }
-    body.dark {
-      --bg-color: #191919;
+    body[theme-mode="dark"] {
       --text-main: #f5f6f7;
       --text-sub: #a6aeb8;
       --text-muted: #757c85;
       --border-color: #373c43;
-      --card-bg: #222326;
-      --card-highlight: linear-gradient(135deg, #3a2a1d 0%, #26201b 100%);
-      --pill-bg: #2b2c2f;
-      --pill-active-bg: #373c43;
+      --panel-bg: #1f2023;
+      --badge-ok-bg: #12361b;
+      --badge-ok-text: #27c346;
+      --badge-warn-bg: #3d2809;
+      --badge-warn-text: #ff9a2e;
     }
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, Helvetica Neue, Tahoma, PingFang SC, Microsoft Yahei, Arial, sans-serif;
     }
     html, body {
       width: 100%;
       height: 100%;
-      background: transparent;
+      background: transparent !important;
+      background-image: none !important;
       color: var(--text-main);
       overflow: hidden;
     }
@@ -48,161 +48,32 @@
       height: 100%;
     }
 
-    /* Khu vực hiển thị chính */
-    .main-area {
+    /* Khu vực hiển thị thẻ Metric */
+    .metric-view {
       flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: center;
       padding: 12px 16px;
       height: 100%;
       overflow: hidden;
       position: relative;
     }
-
-    /* Thanh Slicer tích hợp */
-    .slicer-bar {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 6px;
-      z-index: 10;
-    }
-    .slicer-bar.hidden {
-      display: none !important;
-    }
-
-    /* Chế độ 1: Thanh lọc mini gọn trên thẻ đơn */
-    .mini-filter-row {
+    .metric-header {
       display: flex;
       align-items: center;
-      gap: 4px;
-      flex-wrap: wrap;
-      width: 100%;
-    }
-    .mini-select, .mini-date {
-      height: 24px;
-      padding: 0 6px;
-      border-radius: 5px;
-      border: 1px solid var(--border-color);
-      background: var(--card-bg);
-      color: var(--text-main);
-      font-size: 11px;
-      font-weight: 500;
-      outline: none;
-      cursor: pointer;
-      max-width: 135px;
-      text-overflow: ellipsis;
-    }
-    .mini-select:focus, .mini-date:focus {
-      border-color: var(--primary);
-    }
-    .custom-date-box {
-      display: none;
-      align-items: center;
-      gap: 4px;
-    }
-    .custom-date-box.show {
-      display: inline-flex;
-    }
-
-    /* Chế độ 2: Thanh Slicer giống hệt Lark Dashboard */
-    .full-slicer-row {
-      display: none;
-      align-items: center;
-      gap: 10px;
-      width: 100%;
-      flex-wrap: wrap;
-      margin-bottom: 10px;
-    }
-    .mode-allinone .full-slicer-row {
-      display: flex;
-    }
-    .mode-allinone .mini-filter-row {
-      display: none;
-    }
-    .slicer-group {
-      display: flex;
-      align-items: center;
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 4px 8px;
-      gap: 6px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-    }
-    .slicer-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-sub);
-      white-space: nowrap;
-      margin-right: 2px;
-    }
-    .shop-pills {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      background: var(--pill-bg);
-      padding: 3px;
-      border-radius: 6px;
-      overflow-x: auto;
-      max-width: 480px;
-      scrollbar-width: none;
-    }
-    .shop-pills::-webkit-scrollbar {
-      display: none;
-    }
-    .shop-pill {
-      padding: 4px 10px;
-      border-radius: 5px;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text-sub);
-      cursor: pointer;
-      white-space: nowrap;
-      border: none;
-      background: transparent;
-      transition: all 0.15s;
-    }
-    .shop-pill.active {
-      background: var(--pill-active-bg);
-      color: var(--text-main);
-      font-weight: 600;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    }
-    .slicer-dropdown {
-      border: none;
-      background: transparent;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text-main);
-      outline: none;
-      cursor: pointer;
-      padding: 2px 4px;
-    }
-
-    /* Hiển thị Thẻ đơn (Chế độ 1) */
-    .single-card-view {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      flex: 1;
-      min-height: 0;
-    }
-    .mode-allinone .single-card-view {
-      display: none;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
     }
     .metric-title {
       font-size: 13px;
       font-weight: 600;
       color: var(--text-sub);
-      margin-bottom: 4px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       text-transform: uppercase;
-      letter-spacing: 0.2px;
     }
     .metric-value {
       font-size: clamp(24px, 16vw, 38px);
@@ -215,75 +86,27 @@
       text-overflow: ellipsis;
     }
     .metric-sub {
-      margin-top: 4px;
+      margin-top: 6px;
       font-size: 11px;
       color: var(--text-muted);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-
-    /* Hiển thị 4 Thẻ KPI All-in-One (Chế độ 2) */
-    .four-cards-grid {
+    .status-msg {
+      margin-top: 4px;
+      font-size: 11px;
+      color: #f54a45;
+      line-height: 1.3;
       display: none;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-      flex: 1;
-      align-items: stretch;
-      min-height: 0;
-    }
-    .mode-allinone .four-cards-grid {
-      display: grid;
-    }
-    .kpi-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
-      padding: 12px 16px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-      min-width: 0;
-    }
-    .kpi-card.highlight {
-      background: var(--card-highlight);
-      border-color: rgba(255, 140, 0, 0.25);
-    }
-    .kpi-card .kpi-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-sub);
-      margin-bottom: 6px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      text-transform: uppercase;
-    }
-    .kpi-card .kpi-num {
-      font-size: clamp(20px, 2.8vw, 34px);
-      font-weight: 700;
-      color: var(--text-main);
-      font-variant-numeric: tabular-nums;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .kpi-card .kpi-note {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
 
-    /* Panel cấu hình bên phải (chỉ hiện ở chế độ Create / Config) */
+    /* Panel cấu hình bên phải (chỉ hiện khi Create / Config) */
     .config-panel {
-      width: 350px;
+      width: 340px;
       height: 100%;
       border-left: 1px solid var(--border-color);
-      background: var(--bg-color);
+      background: var(--panel-bg);
       padding: 14px 16px;
       overflow-y: auto;
       display: none;
@@ -293,12 +116,26 @@
     body.is-config .config-panel {
       display: flex;
     }
-    .config-header {
+    .config-title {
       font-size: 14px;
       font-weight: 700;
-      color: var(--text-main);
       padding-bottom: 8px;
       border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .token-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--badge-ok-bg);
+      color: var(--badge-ok-text);
+    }
+    .token-badge.warn {
+      background: var(--badge-warn-bg);
+      color: var(--badge-warn-text);
     }
     .form-group {
       display: flex;
@@ -321,7 +158,7 @@
       padding: 0 8px;
       border: 1px solid var(--border-color);
       border-radius: 6px;
-      background: var(--bg-color);
+      background: var(--panel-bg);
       color: var(--text-main);
       font-size: 12px;
       outline: none;
@@ -341,7 +178,7 @@
       border: none;
       border-radius: 6px;
       background: var(--primary);
-      color: #fff;
+      color: #ffffff;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
@@ -353,178 +190,55 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
-    .error-msg {
-      color: #f54a45;
-      font-size: 12px;
-      margin-top: 4px;
-    }
   </style>
 </head>
 <body>
   <div id="app">
-    <!-- KHU VỰC HIỂN THỊ METRIC & SLICER -->
-    <div class="main-area" id="mainArea">
-      <!-- Thanh Slicer tích hợp -->
-      <div class="slicer-bar" id="slicerBar">
-        <!-- Giao diện lọc gọn cho Chế độ 1 (Thẻ đơn) -->
-        <div class="mini-filter-row" id="miniFilterRow">
-          <select id="miniShopSelect" class="mini-select" title="Lọc theo Shop">
-            <option value="ALL">Shop: Tất cả</option>
-          </select>
-          <select id="miniDateSelect" class="mini-select" title="Lọc theo Thời gian ngày">
-            <option value="last_30_days">30 ngày qua</option>
-            <option value="ALL">Mọi ngày</option>
-            <option value="last_7_days">7 ngày qua</option>
-            <option value="this_month">Tháng này</option>
-            <option value="last_month">Tháng trước</option>
-            <option value="today">Hôm nay</option>
-            <option value="yesterday">Hôm qua</option>
-            <option value="custom">Tùy chọn ngày...</option>
-          </select>
-          <select id="miniMonthSelect" class="mini-select" title="Lọc theo Tháng" style="display:none;">
-            <option value="ALL">Tháng: Tất cả</option>
-          </select>
-          <div class="custom-date-box" id="miniCustomDateBox">
-            <input type="date" id="miniStartDate" class="mini-date" />
-            <span style="font-size:10px;color:var(--text-muted)">-</span>
-            <input type="date" id="miniEndDate" class="mini-date" />
-          </div>
-        </div>
-
-        <!-- Giao diện Slicer đầy đủ cho Chế độ 2 (4 Thẻ All-in-One) -->
-        <div class="full-slicer-row" id="fullSlicerRow">
-          <div class="slicer-group">
-            <span class="slicer-label">SHOP</span>
-            <div class="shop-pills" id="shopPillsContainer">
-              <button class="shop-pill active" data-shop="ALL">Tất cả</button>
-            </div>
-          </div>
-          <div class="slicer-group" id="fullMonthGroup" style="display:none;">
-            <span class="slicer-label">THỜI GIAN</span>
-            <select id="fullMonthSelect" class="slicer-dropdown">
-              <option value="ALL">Chọn (Tất cả)</option>
-            </select>
-          </div>
-          <div class="slicer-group">
-            <span class="slicer-label">THỜI GIAN NGÀY</span>
-            <select id="fullDateSelect" class="slicer-dropdown">
-              <option value="last_30_days">trong 30 ngày qua</option>
-              <option value="ALL">Tất cả thời gian</option>
-              <option value="last_7_days">trong 7 ngày qua</option>
-              <option value="this_month">Tháng này</option>
-              <option value="last_month">Tháng trước</option>
-              <option value="today">Hôm nay</option>
-              <option value="yesterday">Hôm qua</option>
-              <option value="custom">Tùy chọn ngày...</option>
-            </select>
-            <div class="custom-date-box" id="fullCustomDateBox">
-              <input type="date" id="fullStartDate" class="mini-date" />
-              <span style="font-size:11px;color:var(--text-muted)">đến</span>
-              <input type="date" id="fullEndDate" class="mini-date" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Chế độ 1: Thẻ đơn TỶ LỆ QUẢNG CÁO -->
-      <div class="single-card-view" id="singleCardView">
+    <div class="metric-view">
+      <div class="metric-header">
         <div class="metric-title" id="uiTitle">TỶ LỆ QUẢNG CÁO</div>
-        <div class="metric-value" id="uiValue">--%</div>
-        <div class="metric-sub" id="uiSub">Đang tải dữ liệu...</div>
-        <div class="error-msg" id="uiError" style="display:none;"></div>
       </div>
-
-      <!-- Chế độ 2: Cụm 4 Thẻ KPI All-in-One -->
-      <div class="four-cards-grid" id="fourCardsGrid">
-        <div class="kpi-card highlight">
-          <div class="kpi-label">DOANH THU THUẦN (VND)</div>
-          <div class="kpi-num" id="kpiRev">--</div>
-          <div class="kpi-note" id="kpiRevNote">Tổng doanh thu sau lọc</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">CHI PHÍ QUẢNG CÁO (VND)</div>
-          <div class="kpi-num" id="kpiAds">--</div>
-          <div class="kpi-note" id="kpiAdsNote">Tổng chi phí Ads sau lọc</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label" id="kpiRatioLabel">TỶ LỆ QUẢNG CÁO</div>
-          <div class="kpi-num" id="kpiRatio">--%</div>
-          <div class="kpi-note" id="kpiRatioNote">∑Chi phí Ads / ∑Doanh thu</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">SỐ ĐƠN</div>
-          <div class="kpi-num" id="kpiOrders">--</div>
-          <div class="kpi-note" id="kpiOrdersNote">Tổng số đơn hàng</div>
-        </div>
-      </div>
+      <div class="metric-value" id="uiValue">--%</div>
+      <div class="metric-sub" id="uiSub">Đang tải dữ liệu...</div>
+      <div class="status-msg" id="uiError"></div>
     </div>
 
-    <!-- PANEL CẤU HÌNH (Chỉ hiện khi bấm Thiết lập) -->
-    <div class="config-panel" id="configPanel">
-      <div class="config-header">Cấu hình Tỷ lệ Trọng số (∑A / ∑B)</div>
+    <div class="config-panel">
+      <div class="config-title">
+        <span>Cấu hình Tỷ lệ (∑A / ∑B)</span>
+        <span class="token-badge" id="tokenBadge">Đang lấy BaseToken...</span>
+      </div>
 
-      <div class="form-group">
-        <label class="form-label">Chế độ giao diện</label>
-        <select id="layoutModeSelect" class="form-control">
-          <option value="single">1. Thẻ đơn: TỶ LỆ QUẢNG CÁO (Kèm lọc gọn)</option>
-          <option value="allinone">2. All-in-One: Thanh Slicer + Đủ 4 Thẻ Metric</option>
-        </select>
+      <div class="form-group" id="baseGroup">
+        <label class="form-label">0. Đa bảng (Base nguồn — Bắt buộc cho App)</label>
+        <select id="baseSelect" class="form-control"></select>
+        <div class="form-hint">Lưu đúng <code>baseToken</code> để Slicer và <code>getData()</code> trong Bitable App hoạt động.</div>
       </div>
 
       <div class="form-group">
-        <label class="form-label">1. Bảng dữ liệu nguồn</label>
+        <label class="form-label">1. Bảng dữ liệu nguồn (Table)</label>
         <select id="tableSelect" class="form-control"></select>
       </div>
 
-      <div class="row-2">
-        <div class="form-group">
-          <label class="form-label">2. Cột Shop (Lọc Shop)</label>
-          <select id="shopFieldSelect" class="form-control"></select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">3. Cột Ngày (Lọc 30 ngày)</label>
-          <select id="dateFieldSelect" class="form-control"></select>
-        </div>
+      <div class="form-group">
+        <label class="form-label">2. Phạm vi dữ liệu (View / DataRange)</label>
+        <select id="rangeSelect" class="form-control"></select>
       </div>
 
       <div class="form-group">
-        <label class="form-label">4. Cột Tháng (Tuỳ chọn lọc theo Tháng)</label>
-        <select id="monthFieldSelect" class="form-control"></select>
+        <label class="form-label">3. Trường phân nhóm (Group — Để liên kết Slicer)</label>
+        <select id="groupFieldSelect" class="form-control"></select>
+        <div class="form-hint">Chọn <b>TÊN SHOP</b> (hoặc cột phân loại) để Lark tạo cấu trúc bảng 2 chiều cho <code>getData()</code>.</div>
       </div>
 
       <div class="form-group">
-        <label class="form-label">5. Tử số — Tổng A (VD: CHI PHÍ ADS BAO GỒM VAT)</label>
+        <label class="form-label">4. Tử số — Tổng A (VD: CHI PHÍ ADS BAO GỒM VAT)</label>
         <select id="numFieldSelect" class="form-control"></select>
       </div>
 
       <div class="form-group">
-        <label class="form-label">6. Mẫu số — Tổng B (VD: DOANH THU THUẦN)</label>
+        <label class="form-label">5. Mẫu số — Tổng B (VD: DOANH THU THUẦN)</label>
         <select id="denFieldSelect" class="form-control"></select>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">7. Cột Số đơn (Dùng cho chế độ 4 thẻ)</label>
-        <select id="orderFieldSelect" class="form-control"></select>
-      </div>
-
-      <div class="row-2">
-        <div class="form-group">
-          <label class="form-label">Lọc ngày mặc định</label>
-          <select id="defaultDatePresetSelect" class="form-control">
-            <option value="last_30_days">Trong 30 ngày qua</option>
-            <option value="ALL">Tất cả thời gian</option>
-            <option value="last_7_days">Trong 7 ngày qua</option>
-            <option value="this_month">Tháng này</option>
-            <option value="last_month">Tháng trước</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Thanh lọc trên thẻ</label>
-          <select id="showFilterBarSelect" class="form-control">
-            <option value="show">Hiển thị để chọn nhanh</option>
-            <option value="hide">Ẩn (Chỉ dùng mặc định)</option>
-          </select>
-        </div>
       </div>
 
       <div class="row-2">
@@ -544,7 +258,7 @@
 
       <label style="font-size:12px; display:flex; align-items:center; gap:6px; cursor:pointer;">
         <input type="checkbox" id="showSubCheck" checked />
-        Hiển thị dòng phụ (Tổng Ads / Tổng Doanh thu)
+        Hiển thị dòng phụ (Ads / DT)
       </label>
 
       <button id="saveBtn" class="btn-save">Lưu vào Dashboard</button>
@@ -552,239 +266,99 @@
   </div>
 
   <script type="module">
-    async function loadBitableSDK() {
+    async function loadSDK() {
       const urls = [
         'https://cdn.jsdelivr.net/npm/@lark-base-open/js-sdk@1.0.2/+esm',
         'https://esm.sh/@lark-base-open/js-sdk@1.0.2',
         'https://esm.sh/@lark-base-open/js-sdk@0.5.0'
       ];
-      for (const url of urls) {
+      for (const u of urls) {
         try {
-          return await import(url);
-        } catch (err) {
-          console.warn('Thử tải SDK từ nguồn tiếp theo:', url, err);
+          return await import(u);
+        } catch (e) {
+          console.warn('Thử CDN tiếp theo:', u, e);
         }
       }
-      throw new Error('Không thể tải thư viện @lark-base-open/js-sdk.');
+      throw new Error('Không thể tải @lark-base-open/js-sdk');
     }
-
-    const mainArea = document.getElementById('mainArea');
-    const slicerBar = document.getElementById('slicerBar');
-    const miniShopSelect = document.getElementById('miniShopSelect');
-    const miniDateSelect = document.getElementById('miniDateSelect');
-    const miniMonthSelect = document.getElementById('miniMonthSelect');
-    const miniCustomDateBox = document.getElementById('miniCustomDateBox');
-    const miniStartDate = document.getElementById('miniStartDate');
-    const miniEndDate = document.getElementById('miniEndDate');
-
-    const shopPillsContainer = document.getElementById('shopPillsContainer');
-    const fullMonthGroup = document.getElementById('fullMonthGroup');
-    const fullMonthSelect = document.getElementById('fullMonthSelect');
-    const fullDateSelect = document.getElementById('fullDateSelect');
-    const fullCustomDateBox = document.getElementById('fullCustomDateBox');
-    const fullStartDate = document.getElementById('fullStartDate');
-    const fullEndDate = document.getElementById('fullEndDate');
 
     const uiTitle = document.getElementById('uiTitle');
     const uiValue = document.getElementById('uiValue');
     const uiSub = document.getElementById('uiSub');
     const uiError = document.getElementById('uiError');
+    const tokenBadge = document.getElementById('tokenBadge');
 
-    const kpiRev = document.getElementById('kpiRev');
-    const kpiAds = document.getElementById('kpiAds');
-    const kpiRatioLabel = document.getElementById('kpiRatioLabel');
-    const kpiRatio = document.getElementById('kpiRatio');
-    const kpiRatioNote = document.getElementById('kpiRatioNote');
-    const kpiOrders = document.getElementById('kpiOrders');
-
-    const layoutModeSelect = document.getElementById('layoutModeSelect');
+    const baseSelect = document.getElementById('baseSelect');
     const tableSelect = document.getElementById('tableSelect');
-    const shopFieldSelect = document.getElementById('shopFieldSelect');
-    const dateFieldSelect = document.getElementById('dateFieldSelect');
-    const monthFieldSelect = document.getElementById('monthFieldSelect');
+    const rangeSelect = document.getElementById('rangeSelect');
+    const groupFieldSelect = document.getElementById('groupFieldSelect');
     const numFieldSelect = document.getElementById('numFieldSelect');
     const denFieldSelect = document.getElementById('denFieldSelect');
-    const orderFieldSelect = document.getElementById('orderFieldSelect');
-    const defaultDatePresetSelect = document.getElementById('defaultDatePresetSelect');
-    const showFilterBarSelect = document.getElementById('showFilterBarSelect');
     const titleInput = document.getElementById('titleInput');
     const precisionSelect = document.getElementById('precisionSelect');
     const showSubCheck = document.getElementById('showSubCheck');
     const saveBtn = document.getElementById('saveBtn');
 
-    function showError(msg) {
-      uiError.style.display = 'block';
-      uiError.textContent = msg;
-    }
-    function clearError() {
-      uiError.style.display = 'none';
-      uiError.textContent = '';
+    function setError(msg) {
+      if (!msg) {
+        uiError.style.display = 'none';
+        uiError.textContent = '';
+      } else {
+        uiError.style.display = 'block';
+        uiError.textContent = msg;
+      }
     }
 
-    function parseNumber(val) {
-      if (val === null || val === undefined || val === '') return 0;
-      if (typeof val === 'number') return isFinite(val) ? val : 0;
-      if (Array.isArray(val)) {
-        return val.reduce((acc, item) => acc + parseNumber(item), 0);
-      }
-      if (typeof val === 'object') {
-        if ('value' in val) return parseNumber(val.value);
-        if ('text' in val) return parseNumber(val.text);
+    function parseNum(v) {
+      if (v === null || v === undefined || v === '' || v === '#DIV/0!') return 0;
+      if (typeof v === 'number') return isFinite(v) ? v : 0;
+      if (typeof v === 'object') {
+        if ('value' in v) return parseNum(v.value);
+        if ('text' in v) return parseNum(v.text);
         return 0;
       }
-      const str = String(val).trim();
-      if (!str) return 0;
-      const cleaned = str.replace(/[^\d.,-]/g, '');
-      if (!cleaned) return 0;
-      if (/^-?\d+(\.\d{3})+$/.test(cleaned)) {
-        return Number(cleaned.replace(/\./g, '')) || 0;
-      }
-      if (/^-?\d+(,\d{3})+$/.test(cleaned)) {
-        return Number(cleaned.replace(/,/g, '')) || 0;
-      }
-      const normalized = cleaned.replace(/,/g, '');
-      const num = Number(normalized);
-      return isFinite(num) ? num : 0;
+      const s = String(v).trim().replace(/[^\d.,-]/g, '');
+      if (!s) return 0;
+      if (/^-?\d+(\.\d{3})+$/.test(s)) return Number(s.replace(/\./g, '')) || 0;
+      if (/^-?\d+(,\d{3})+$/.test(s)) return Number(s.replace(/,/g, '')) || 0;
+      const n = Number(s.replace(/,/g, ''));
+      return isFinite(n) ? n : 0;
     }
 
-    function parseText(val) {
-      if (val === null || val === undefined) return '';
-      if (typeof val === 'string') return val.trim();
-      if (typeof val === 'number') return String(val);
-      if (Array.isArray(val)) {
-        return val.map(parseText).filter(Boolean).join(', ').trim();
-      }
-      if (typeof val === 'object') {
-        if (typeof val.text === 'string') return val.text.trim();
-        if (typeof val.name === 'string') return val.name.trim();
-        if ('value' in val) return parseText(val.value);
-      }
-      return '';
-    }
-
-    function parseDateMs(val) {
-      if (val === null || val === undefined || val === '') return null;
-      if (typeof val === 'number') {
-        if (val > 1e11) return val;
-        if (val > 1e9) return val * 1000;
-        if (val > 20000 && val < 90000) return Math.round((val - 25569) * 86400000);
-        return null;
-      }
-      if (Array.isArray(val)) {
-        for (const item of val) {
-          const ms = parseDateMs(item);
-          if (ms !== null) return ms;
-        }
-        return null;
-      }
-      if (typeof val === 'object') {
-        if ('value' in val) {
-          const ms = parseDateMs(val.value);
-          if (ms !== null) return ms;
-        }
-        if ('text' in val) {
-          const ms = parseDateMs(val.text);
-          if (ms !== null) return ms;
-        }
-        return null;
-      }
-      const str = String(val).trim();
-      if (!str) return null;
-      if (/^\d{10,13}$/.test(str)) {
-        const n = Number(str);
-        return str.length === 10 ? n * 1000 : n;
-      }
-      const dmy = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-      if (dmy) {
-        const d = Number(dmy[1]);
-        const m = Number(dmy[2]);
-        const y = Number(dmy[3]);
-        return new Date(y, m - 1, d, 12, 0, 0).getTime();
-      }
-      const ymd = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
-      if (ymd) {
-        const y = Number(ymd[1]);
-        const m = Number(ymd[2]);
-        const d = Number(ymd[3]);
-        return new Date(y, m - 1, d, 12, 0, 0).getTime();
-      }
-      const parsed = Date.parse(str);
-      return isNaN(parsed) ? null : parsed;
-    }
-
-    function formatVN(num, decimals = 0) {
-      return Number(num || 0).toLocaleString('vi-VN', {
+    function formatVN(n, decimals = 2) {
+      return Number(n || 0).toLocaleString('vi-VN', {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals
       });
     }
 
-    function formatComma(num) {
-      return Math.round(Number(num || 0)).toLocaleString('en-US');
-    }
-
-    // Trạng thái bộ lọc tương tác hiện tại
-    let filterState = {
-      shop: 'ALL',
-      datePreset: 'last_30_days',
-      month: 'ALL',
-      startDate: '',
-      endDate: ''
-    };
-
-    // Bộ đệm bản ghi từ bảng TRACKING ALL
-    let cachedRecordsTableKey = '';
-    let cachedRows = [];
-    let cachedShops = [];
-    let cachedMonths = [];
-
-    function getDateBounds(preset, startStr, endStr) {
-      if (!preset || preset === 'ALL') return null;
-      const now = new Date();
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0).getTime();
-      const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).getTime();
-      const DAY = 86400000;
-
-      if (preset === 'today') {
-        return { min: todayStart, max: todayEnd };
+    function sumFromIData(matrix) {
+      let sumNum = 0;
+      let sumDen = 0;
+      if (!Array.isArray(matrix) || matrix.length < 2) {
+        return { sumNum: 0, sumDen: 0 };
       }
-      if (preset === 'yesterday') {
-        return { min: todayStart - DAY, max: todayStart - 1 };
+      for (let r = 1; r < matrix.length; r++) {
+        const row = matrix[r];
+        if (!Array.isArray(row) || row.length < 2) continue;
+        if (row.length >= 3) {
+          sumNum += parseNum(row[1]);
+          sumDen += parseNum(row[2]);
+        } else {
+          sumNum += parseNum(row[0]);
+          sumDen += parseNum(row[1]);
+        }
       }
-      if (preset === 'last_7_days') {
-        // Chuẩn Lark Base: Hôm nay + 6 ngày trước = 7 ngày
-        return { min: todayStart - 6 * DAY, max: todayEnd };
-      }
-      if (preset === 'last_30_days') {
-        // Chuẩn Lark Base ("trong 30 ngày qua"): Hôm nay + 29 ngày trước = 30 ngày
-        return { min: todayStart - 29 * DAY, max: todayEnd };
-      }
-      if (preset === 'this_month') {
-        const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0).getTime();
-        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999).getTime();
-        return { min: start, max: end };
-      }
-      if (preset === 'last_month') {
-        const start = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0).getTime();
-        const end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999).getTime();
-        return { min: start, max: end };
-      }
-      if (preset === 'custom') {
-        const min = startStr ? new Date(startStr + 'T00:00:00').getTime() : -Infinity;
-        const max = endStr ? new Date(endStr + 'T23:59:59.999').getTime() : Infinity;
-        return { min, max };
-      }
-      return null;
+      return { sumNum, sumDen };
     }
 
     async function init() {
       try {
-        const sdk = await loadBitableSDK();
-        const bitable = sdk.bitable;
-        const workspace = sdk.workspace || bitable?.workspace;
-        let activeDashboard = sdk.dashboard || bitable?.dashboard;
-        let activeBase = sdk.base || bitable?.base;
-        let activeBaseToken = '';
+        const sdk = await loadSDK();
+        const bitableSdk = sdk.bitable;
+        const dashboardSdk = sdk.dashboard || bitableSdk?.dashboard;
+        const workspace = sdk.workspace || bitableSdk?.workspace;
+        const bridge = sdk.bridge || bitableSdk?.bridge;
 
         const DashboardState = sdk.DashboardState || {
           Create: 'Create',
@@ -792,592 +366,415 @@
           View: 'View',
           FullScreen: 'FullScreen'
         };
+        const SourceType = sdk.SourceType || { ALL: 'ALL', VIEW: 'VIEW' };
         const Rollup = sdk.Rollup || { SUM: 'SUM' };
-        const SourceType = sdk.SourceType || { ALL: 'ALL' };
         const GroupMode = sdk.GroupMode || { INTEGRATED: 'integrated' };
         const ORDER = sdk.ORDER || { ASCENDING: 1 };
         const DATA_SOURCE_SORT_TYPE = sdk.DATA_SOURCE_SORT_TYPE || { VALUE: 'VALUE' };
 
-        async function resolveBaseApp(preferredBaseToken = '') {
-          try {
-            const list = await activeBase.getTableMetaList();
-            if (Array.isArray(list) && list.length > 0) {
-              return { base: activeBase, baseToken: preferredBaseToken };
-            }
-          } catch (e) {}
+        let activeBitable = bitableSdk;
+        let activeDashboard = dashboardSdk;
+        let isMultipleBase = false;
+        let availableBases = [];
+        let availableRanges = [{ type: SourceType.ALL }];
 
-          if (workspace) {
-            try {
-              let token = preferredBaseToken;
-              if (!token && typeof workspace.getBaseList === 'function') {
-                const res = await workspace.getBaseList({});
-                const baseList = res?.base_list || res?.baseList || [];
-                if (baseList.length > 0) {
-                  token = baseList[0].token;
-                }
-              }
-              if (token && typeof workspace.getBitable === 'function') {
-                const bitableApp = await workspace.getBitable(token);
-                if (bitableApp?.base) {
-                  activeBase = bitableApp.base;
-                  activeBaseToken = token;
-                  if (bitableApp.dashboard) activeDashboard = bitableApp.dashboard;
-                  return { base: activeBase, baseToken: token };
-                }
-              }
-            } catch (e) {
-              console.warn('Workspace resolve warning:', e);
-            }
+        // 1. Kiểm tra môi trường Bitable App theo tài liệu HcFVw4twtivAnykhOeec5mAMnth (bridge.getEnv)
+        try {
+          if (bridge && typeof bridge.getEnv === 'function') {
+            const env = await bridge.getEnv();
+            isMultipleBase = Boolean(env?.needChangeBase);
           }
-          return { base: activeBase, baseToken: preferredBaseToken };
-        }
+        } catch (e) {}
 
-        async function applyTheme() {
+        // 2. Luôn truy vấn workspace.getBaseList() để lấy danh sách Base & baseToken thật sự
+        if (workspace && typeof workspace.getBaseList === 'function') {
           try {
-            if (activeDashboard.getTheme) {
-              const t = await activeDashboard.getTheme();
-              const mode = String(t?.theme || '').toUpperCase();
-              document.body.classList.toggle('dark', mode.includes('DARK'));
+            const res = await workspace.getBaseList({ query: '', page: { cursor: '' } });
+            availableBases = res?.base_list || res?.baseList || [];
+            if (availableBases.length > 0) {
+              isMultipleBase = true;
             }
-          } catch (e) {}
-        }
-        await applyTheme();
-        if (activeDashboard.onThemeChange) {
-          activeDashboard.onThemeChange(() => applyTheme());
+          } catch (e) {
+            console.warn('getBaseList warning:', e);
+          }
         }
 
-        const state = activeDashboard.state;
-        const isConfigMode = (state === DashboardState.Create || state === DashboardState.Config);
+        const state = dashboardSdk.state;
+        const isCreate = state === DashboardState.Create;
+        const isConfigMode = isCreate || state === DashboardState.Config;
         document.body.classList.toggle('is-config', isConfigMode);
 
         let currentConfig = {
           baseToken: '',
           tableId: '',
-          shopFieldId: '',
-          dateFieldId: '',
-          monthFieldId: '',
+          dataRange: { type: SourceType.ALL },
+          groupFieldId: '',
           numFieldId: '',
           denFieldId: '',
-          orderFieldId: '',
-          layoutMode: 'single',
-          defaultDatePreset: 'last_30_days',
-          showFilterBar: 'show',
           title: 'TỶ LỆ QUẢNG CÁO',
           precision: 2,
           showSub: true
         };
 
-        if (state !== DashboardState.Create) {
-          try {
-            const saved = await activeDashboard.getConfig();
-            if (saved) {
-              const cond0 = saved.dataConditions?.[0] || {};
-              const custom = saved.customConfig || {};
-              currentConfig.baseToken = cond0.baseToken || custom.baseToken || '';
-              currentConfig.tableId = cond0.tableId || custom.tableId || '';
-              currentConfig.shopFieldId = custom.shopFieldId || cond0.groups?.[0]?.fieldId || '';
-              currentConfig.dateFieldId = custom.dateFieldId || '';
-              currentConfig.monthFieldId = custom.monthFieldId || '';
-              currentConfig.numFieldId = cond0.series?.[0]?.fieldId || custom.numFieldId || '';
-              currentConfig.denFieldId = cond0.series?.[1]?.fieldId || custom.denFieldId || '';
-              currentConfig.orderFieldId = cond0.series?.[2]?.fieldId || custom.orderFieldId || '';
-              currentConfig.layoutMode = custom.layoutMode || 'single';
-              currentConfig.defaultDatePreset = custom.defaultDatePreset || 'last_30_days';
-              currentConfig.showFilterBar = custom.showFilterBar || 'show';
-              if (custom.title !== undefined) currentConfig.title = custom.title;
-              if (custom.precision !== undefined) currentConfig.precision = Number(custom.precision);
-              if (custom.showSub !== undefined) currentConfig.showSub = Boolean(custom.showSub);
+        function parseSavedConfig(saved) {
+          if (!saved) return;
+          const conds = Array.isArray(saved.dataConditions) ? saved.dataConditions : [saved.dataConditions];
+          const cond0 = conds[0] || {};
+          const custom = saved.customConfig || {};
+
+          if (cond0.baseToken || custom.baseToken) {
+            currentConfig.baseToken = cond0.baseToken || custom.baseToken;
+          }
+          if (cond0.tableId || custom.tableId) {
+            currentConfig.tableId = cond0.tableId || custom.tableId;
+          }
+          if (cond0.dataRange) {
+            currentConfig.dataRange = cond0.dataRange;
+          }
+          if (cond0.groups?.[0]?.fieldId || custom.groupFieldId) {
+            currentConfig.groupFieldId = cond0.groups?.[0]?.fieldId || custom.groupFieldId;
+          }
+          if (cond0.series?.[0]?.fieldId || custom.numFieldId) {
+            currentConfig.numFieldId = cond0.series?.[0]?.fieldId || custom.numFieldId;
+          }
+          if (cond0.series?.[1]?.fieldId || custom.denFieldId) {
+            currentConfig.denFieldId = cond0.series?.[1]?.fieldId || custom.denFieldId;
+          }
+          if (custom.title !== undefined) currentConfig.title = custom.title;
+          if (custom.precision !== undefined) currentConfig.precision = Number(custom.precision);
+          if (custom.showSub !== undefined) currentConfig.showSub = Boolean(custom.showSub);
+        }
+
+        // Theo tài liệu: đọc getConfig() để lấy defaultBaseToken và cấu hình đã lưu
+        try {
+          const saved = await dashboardSdk.getConfig();
+          parseSavedConfig(saved);
+        } catch (e) {
+          // Ở trạng thái Create có thể chưa có config
+        }
+
+        if (!currentConfig.baseToken && availableBases.length > 0) {
+          currentConfig.baseToken = availableBases[0].token;
+        }
+
+        // Chuyển ngữ cảnh sang đúng instance của workspace.getBitable(baseToken)
+        async function switchBitableInstance(token) {
+          if (token && workspace && typeof workspace.getBitable === 'function') {
+            try {
+              const app = await workspace.getBitable(token);
+              if (app) {
+                activeBitable = app;
+                activeDashboard = app.dashboard || dashboardSdk;
+                tokenBadge.textContent = 'BaseToken: OK';
+                tokenBadge.classList.remove('warn');
+                return;
+              }
+            } catch (e) {
+              console.warn('getBitable error:', e);
             }
-          } catch (e) {
-            console.warn('getConfig warning:', e);
           }
+          activeBitable = bitableSdk;
+          activeDashboard = dashboardSdk;
+          tokenBadge.textContent = token ? 'BaseToken: OK' : 'Base mặc định';
         }
 
-        filterState.datePreset = currentConfig.defaultDatePreset || 'last_30_days';
+        await switchBitableInstance(currentConfig.baseToken);
 
-        await resolveBaseApp(currentConfig.baseToken);
-        if (activeBaseToken && !currentConfig.baseToken) {
-          currentConfig.baseToken = activeBaseToken;
+        // Đồng bộ giao diện Sáng / Tối
+        async function syncTheme() {
+          try {
+            const res = await activeDashboard.getTheme();
+            const isDark = String(res?.theme || '').toUpperCase().includes('DARK');
+            document.body.setAttribute('theme-mode', isDark ? 'dark' : 'light');
+          } catch (e) {}
+        }
+        await syncTheme();
+        if (activeDashboard.onThemeChange) {
+          activeDashboard.onThemeChange(() => syncTheme());
         }
 
-        function syncFilterControlsUI() {
-          miniShopSelect.value = filterState.shop;
-          miniDateSelect.value = filterState.datePreset;
-          miniMonthSelect.value = filterState.month;
-          fullDateSelect.value = filterState.datePreset;
-          fullMonthSelect.value = filterState.month;
-
-          const isCustom = filterState.datePreset === 'custom';
-          miniCustomDateBox.classList.toggle('show', isCustom);
-          fullCustomDateBox.classList.toggle('show', isCustom);
-
-          const pills = shopPillsContainer.querySelectorAll('.shop-pill');
-          pills.forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.shop === filterState.shop);
-          });
-        }
-
-        function populateFilterOptions(shops, months, hasMonthField) {
-          // Dropdown Shop (Chế độ 1)
-          const curShop = filterState.shop;
-          miniShopSelect.innerHTML = '<option value="ALL">Shop: Tất cả</option>';
-          shops.forEach(s => {
-            const opt = document.createElement('option');
-            opt.value = s;
-            opt.textContent = s;
-            miniShopSelect.appendChild(opt);
-          });
-          miniShopSelect.value = shops.includes(curShop) ? curShop : 'ALL';
-
-          // Pills Shop (Chế độ 2)
-          shopPillsContainer.innerHTML = '';
-          const allBtn = document.createElement('button');
-          allBtn.className = 'shop-pill' + (filterState.shop === 'ALL' ? ' active' : '');
-          allBtn.dataset.shop = 'ALL';
-          allBtn.textContent = 'Tất cả';
-          allBtn.onclick = () => {
-            filterState.shop = 'ALL';
-            syncFilterControlsUI();
-            recalculateFromMemory();
+        function buildDataCondition() {
+          const cond = {
+            tableId: currentConfig.tableId,
+            dataRange: currentConfig.dataRange || { type: SourceType.ALL },
+            series: [
+              { fieldId: currentConfig.numFieldId, rollup: Rollup.SUM },
+              { fieldId: currentConfig.denFieldId, rollup: Rollup.SUM }
+            ]
           };
-          shopPillsContainer.appendChild(allBtn);
-
-          shops.forEach(s => {
-            const btn = document.createElement('button');
-            btn.className = 'shop-pill' + (filterState.shop === s ? ' active' : '');
-            btn.dataset.shop = s;
-            btn.textContent = s;
-            btn.onclick = () => {
-              filterState.shop = s;
-              syncFilterControlsUI();
-              recalculateFromMemory();
-            };
-            shopPillsContainer.appendChild(btn);
-          });
-
-          // Dropdown Tháng
-          if (hasMonthField && months.length > 0) {
-            miniMonthSelect.style.display = '';
-            fullMonthGroup.style.display = 'flex';
-            miniMonthSelect.innerHTML = '<option value="ALL">Tháng: Tất cả</option>';
-            fullMonthSelect.innerHTML = '<option value="ALL">Chọn (Tất cả)</option>';
-            months.forEach(m => {
-              const o1 = document.createElement('option');
-              o1.value = m;
-              o1.textContent = m;
-              miniMonthSelect.appendChild(o1);
-
-              const o2 = document.createElement('option');
-              o2.value = m;
-              o2.textContent = m;
-              fullMonthSelect.appendChild(o2);
-            });
-          } else {
-            miniMonthSelect.style.display = 'none';
-            fullMonthGroup.style.display = 'none';
+          if (currentConfig.baseToken) {
+            cond.baseToken = currentConfig.baseToken;
           }
-
-          syncFilterControlsUI();
+          if (currentConfig.groupFieldId) {
+            cond.groups = [
+              {
+                fieldId: currentConfig.groupFieldId,
+                mode: GroupMode.INTEGRATED,
+                sort: {
+                  order: ORDER.ASCENDING,
+                  sortType: DATA_SOURCE_SORT_TYPE.VALUE
+                }
+              }
+            ];
+          }
+          return cond;
         }
 
-        function renderTotals(sumNum, sumDen, sumOrders) {
-          clearError();
-          const isAllInOne = currentConfig.layoutMode === 'allinone';
-          mainArea.classList.toggle('mode-allinone', isAllInOne);
-          slicerBar.classList.toggle('hidden', currentConfig.showFilterBar === 'hide');
-
-          const ratio = sumDen !== 0 ? (sumNum / sumDen) * 100 : 0;
-          const formattedRatio = formatVN(ratio, currentConfig.precision) + '%';
-
-          // Chế độ 1: Thẻ đơn
+        function renderCard(sumNum, sumDen) {
+          setError('');
           uiTitle.textContent = currentConfig.title || 'TỶ LỆ QUẢNG CÁO';
-          uiValue.textContent = formattedRatio;
+          const ratio = sumDen !== 0 ? (sumNum / sumDen) * 100 : 0;
+          uiValue.textContent = formatVN(ratio, currentConfig.precision) + '%';
           if (currentConfig.showSub) {
             uiSub.style.display = 'block';
             uiSub.textContent = `Ads: ${formatVN(sumNum, 0)} / DT: ${formatVN(sumDen, 0)}`;
           } else {
             uiSub.style.display = 'none';
           }
-
-          // Chế độ 2: 4 Thẻ KPI All-in-One
-          kpiRev.textContent = formatComma(sumDen);
-          kpiAds.textContent = formatComma(sumNum);
-          kpiRatioLabel.textContent = currentConfig.title || 'TỶ LỆ QUẢNG CÁO';
-          kpiRatio.textContent = formattedRatio;
-          kpiRatioNote.textContent = `Ads: ${formatVN(sumNum, 0)} / DT: ${formatVN(sumDen, 0)}`;
-          kpiOrders.textContent = formatComma(sumOrders);
         }
 
-        function recalculateFromMemory() {
-          if (!cachedRows || cachedRows.length === 0) return false;
-          const bounds = getDateBounds(filterState.datePreset, filterState.startDate, filterState.endDate);
-          let sumNum = 0;
-          let sumDen = 0;
-          let sumOrders = 0;
-
-          for (const row of cachedRows) {
-            if (filterState.shop !== 'ALL' && row.shop !== filterState.shop) continue;
-            if (filterState.month !== 'ALL' && row.month !== filterState.month) continue;
-            if (bounds && currentConfig.dateFieldId) {
-              if (row.dateMs === null || row.dateMs < bounds.min || row.dateMs > bounds.max) continue;
-            }
-            sumNum += row.num;
-            sumDen += row.den;
-            sumOrders += row.orders;
-          }
-
-          renderTotals(sumNum, sumDen, sumOrders);
-          return true;
-        }
-
-        async function fetchRecordsAndCalculate() {
-          if (!currentConfig.tableId || !currentConfig.numFieldId || !currentConfig.denFieldId) {
-            return;
-          }
-
-          const cacheKey = [
-            currentConfig.baseToken,
-            currentConfig.tableId,
-            currentConfig.shopFieldId,
-            currentConfig.dateFieldId,
-            currentConfig.monthFieldId,
-            currentConfig.numFieldId,
-            currentConfig.denFieldId,
-            currentConfig.orderFieldId
-          ].join('|');
-
-          if (cacheKey === cachedRecordsTableKey && cachedRows.length > 0) {
-            recalculateFromMemory();
-            return;
-          }
-
+        // Hàm tính toán & hiển thị theo đúng quy tắc tài liệu Feishu:
+        // - Config/Create: dùng getPreviewData(cond)
+        // - View/FullScreen: dùng getData()
+        async function computeAndRender(overrideMatrix = null) {
           try {
-            await resolveBaseApp(currentConfig.baseToken);
-            const table = await activeBase.getTableById(currentConfig.tableId);
-            let allRecords = [];
-            let pageToken = undefined;
-            let hasMore = true;
-            let guard = 0;
-
-            while (hasMore && guard < 20) {
-              guard++;
-              const params = { pageSize: 5000 };
-              if (pageToken) params.pageToken = pageToken;
-              const res = await table.getRecords(params);
-              if (res?.records?.length) {
-                allRecords = allRecords.concat(res.records);
-              }
-              hasMore = Boolean(res?.hasMore);
-              pageToken = res?.pageToken;
-              if (!pageToken) break;
-            }
-
-            if (allRecords.length > 0) {
-              const rows = [];
-              const shopSet = new Set();
-              const monthSet = new Set();
-
-              for (const rec of allRecords) {
-                const f = rec.fields || {};
-                const num = parseNumber(f[currentConfig.numFieldId]);
-                const den = parseNumber(f[currentConfig.denFieldId]);
-                const orders = currentConfig.orderFieldId ? parseNumber(f[currentConfig.orderFieldId]) : 0;
-                const shop = currentConfig.shopFieldId ? parseText(f[currentConfig.shopFieldId]) : '';
-                const dateMs = currentConfig.dateFieldId ? parseDateMs(f[currentConfig.dateFieldId]) : null;
-                let month = currentConfig.monthFieldId ? parseText(f[currentConfig.monthFieldId]) : '';
-                if (!month && dateMs !== null) {
-                  const d = new Date(dateMs);
-                  month = `Tháng ${d.getMonth() + 1} / ${d.getFullYear()}`;
-                }
-
-                if (shop) shopSet.add(shop);
-                if (month) monthSet.add(month);
-
-                rows.push({ num, den, orders, shop, dateMs, month });
-              }
-
-              cachedRecordsTableKey = cacheKey;
-              cachedRows = rows;
-              cachedShops = Array.from(shopSet).sort((a, b) => a.localeCompare(b, 'vi'));
-              cachedMonths = Array.from(monthSet);
-
-              populateFilterOptions(cachedShops, cachedMonths, Boolean(currentConfig.monthFieldId || currentConfig.dateFieldId));
-              recalculateFromMemory();
-
-              if (activeDashboard.setRendered) {
-                setTimeout(() => activeDashboard.setRendered(), 50);
-              }
+            if (Array.isArray(overrideMatrix) && overrideMatrix.length >= 2) {
+              const { sumNum, sumDen } = sumFromIData(overrideMatrix);
+              renderCard(sumNum, sumDen);
+              if (activeDashboard.setRendered) activeDashboard.setRendered();
               return;
             }
-          } catch (err) {
-            console.warn('getRecords fallback sang getPreviewData:', err);
-          }
 
-          // Fallback sang getPreviewData nếu getRecords bị giới hạn quyền
-          try {
-            const series = [
-              { fieldId: currentConfig.numFieldId, rollup: Rollup.SUM },
-              { fieldId: currentConfig.denFieldId, rollup: Rollup.SUM }
-            ];
-            if (currentConfig.orderFieldId) {
-              series.push({ fieldId: currentConfig.orderFieldId, rollup: Rollup.SUM });
-            }
-            const cond = {
-              tableId: currentConfig.tableId,
-              dataRange: { type: SourceType.ALL },
-              series
-            };
-            if (currentConfig.baseToken) cond.baseToken = currentConfig.baseToken;
-            if (currentConfig.shopFieldId) {
-              cond.groups = [{
-                fieldId: currentConfig.shopFieldId,
-                mode: GroupMode.INTEGRATED,
-                sort: { order: ORDER.ASCENDING, sortType: DATA_SOURCE_SORT_TYPE.VALUE }
-              }];
-            }
-            const matrix = await activeDashboard.getPreviewData(cond);
-            let sumNum = 0, sumDen = 0, sumOrders = 0;
-            if (Array.isArray(matrix) && matrix.length >= 2) {
-              for (let r = 1; r < matrix.length; r++) {
-                const row = matrix[r];
-                if (!Array.isArray(row)) continue;
-                sumNum += parseNumber(row[1]?.value ?? row[1]?.text);
-                sumDen += parseNumber(row[2]?.value ?? row[2]?.text);
-                if (row[3]) sumOrders += parseNumber(row[3]?.value ?? row[3]?.text);
+            if (isConfigMode) {
+              if (!currentConfig.tableId || !currentConfig.numFieldId || !currentConfig.denFieldId) return;
+              const cond = buildDataCondition();
+              const previewMatrix = await activeDashboard.getPreviewData(cond);
+              const { sumNum, sumDen } = sumFromIData(previewMatrix);
+              renderCard(sumNum, sumDen);
+              if (activeDashboard.setRendered) activeDashboard.setRendered();
+            } else {
+              // Chế độ View: bắt buộc gọi getData() trên activeDashboard để nhận dữ liệu từ Slicer
+              try {
+                const viewMatrix = await activeDashboard.getData();
+                const { sumNum, sumDen } = sumFromIData(viewMatrix);
+                renderCard(sumNum, sumDen);
+                if (activeDashboard.setRendered) activeDashboard.setRendered();
+              } catch (viewErr) {
+                console.warn('activeDashboard.getData() lỗi, thử dashboardSdk.getData():', viewErr);
+                try {
+                  const rootMatrix = await dashboardSdk.getData();
+                  const { sumNum, sumDen } = sumFromIData(rootMatrix);
+                  renderCard(sumNum, sumDen);
+                  if (dashboardSdk.setRendered) dashboardSdk.setRendered();
+                } catch (rootErr) {
+                  // Nếu khối cũ chưa lưu baseToken nên thiếu dataMeta -> fallback tạm sang getPreviewData
+                  const cond = buildDataCondition();
+                  const fbMatrix = await activeDashboard.getPreviewData(cond);
+                  const { sumNum, sumDen } = sumFromIData(fbMatrix);
+                  renderCard(sumNum, sumDen);
+                  setError('Hãy bấm [...] -> Thiết lập -> Lưu vào Dashboard 1 lần để cập nhật BaseToken.');
+                }
               }
             }
-            renderTotals(sumNum, sumDen, sumOrders);
-            if (activeDashboard.setRendered) activeDashboard.setRendered();
-          } catch (e2) {
-            showError('Lỗi đọc dữ liệu: ' + (e2?.message || String(e2)));
+          } catch (err) {
+            setError('Lỗi dữ liệu: ' + (err?.message || String(err)));
           }
         }
 
-        // Sự kiện tương tác trên thanh Slicer
-        miniShopSelect.addEventListener('change', () => {
-          filterState.shop = miniShopSelect.value;
-          syncFilterControlsUI();
-          recalculateFromMemory();
-        });
-        miniDateSelect.addEventListener('change', () => {
-          filterState.datePreset = miniDateSelect.value;
-          syncFilterControlsUI();
-          recalculateFromMemory();
-        });
-        fullDateSelect.addEventListener('change', () => {
-          filterState.datePreset = fullDateSelect.value;
-          syncFilterControlsUI();
-          recalculateFromMemory();
-        });
-        miniMonthSelect.addEventListener('change', () => {
-          filterState.month = miniMonthSelect.value;
-          syncFilterControlsUI();
-          recalculateFromMemory();
-        });
-        fullMonthSelect.addEventListener('change', () => {
-          filterState.month = fullMonthSelect.value;
-          syncFilterControlsUI();
-          recalculateFromMemory();
-        });
-        [miniStartDate, miniEndDate, fullStartDate, fullEndDate].forEach(inp => {
-          inp.addEventListener('change', () => {
-            filterState.startDate = miniStartDate.value || fullStartDate.value;
-            filterState.endDate = miniEndDate.value || fullEndDate.value;
-            recalculateFromMemory();
-          });
-        });
-
-        // Khởi tạo Panel cấu hình khi ở chế độ Create / Config
         if (isConfigMode) {
-          const tables = await activeBase.getTableMetaList();
-          tableSelect.innerHTML = '';
-          tables.forEach(t => {
+          // Đổ danh sách Đa bảng (Base)
+          baseSelect.innerHTML = '';
+          if (availableBases.length > 0) {
+            availableBases.forEach(b => {
+              const opt = document.createElement('option');
+              opt.value = b.token;
+              opt.textContent = `${b.name} (${b.token.slice(0, 6)}...)`;
+              baseSelect.appendChild(opt);
+            });
+            baseSelect.value = currentConfig.baseToken;
+          } else {
             const opt = document.createElement('option');
-            opt.value = t.id;
-            opt.textContent = t.name;
-            tableSelect.appendChild(opt);
-          });
-
-          if (!currentConfig.tableId && tables.length > 0) {
-            const tracking = tables.find(t => t.name.toUpperCase().includes('TRACKING'));
-            currentConfig.tableId = tracking ? tracking.id : tables[0].id;
+            opt.value = currentConfig.baseToken || '';
+            opt.textContent = 'Base hiện tại';
+            baseSelect.appendChild(opt);
           }
-          tableSelect.value = currentConfig.tableId;
 
-          layoutModeSelect.value = currentConfig.layoutMode;
-          defaultDatePresetSelect.value = currentConfig.defaultDatePreset;
-          showFilterBarSelect.value = currentConfig.showFilterBar;
           titleInput.value = currentConfig.title;
           precisionSelect.value = String(currentConfig.precision);
           showSubCheck.checked = currentConfig.showSub;
 
-          async function loadFieldsForTable(tableId) {
-            let fields = [];
+          async function loadTablesForCurrentBase() {
+            const tables = (await activeBitable.base.getTableMetaList()) || [];
+            tableSelect.innerHTML = '';
+            tables.forEach(t => {
+              const opt = document.createElement('option');
+              opt.value = t.id;
+              opt.textContent = t.name;
+              tableSelect.appendChild(opt);
+            });
+
+            if (!currentConfig.tableId || !tables.some(t => t.id === currentConfig.tableId)) {
+              const tracking = tables.find(t => t.name.toUpperCase().includes('TRACKING'));
+              currentConfig.tableId = tracking ? tracking.id : (tables[0]?.id || '');
+            }
+            tableSelect.value = currentConfig.tableId;
+            await loadRangesAndFields(currentConfig.tableId);
+          }
+
+          async function loadRangesAndFields(tableId) {
+            if (!tableId) return;
+
+            // Lấy dataRange chuẩn từ getTableDataRange theo đúng DateHeatMapDashboard
             try {
-              const table = await activeBase.getTableById(tableId);
-              fields = await table.getFieldMetaList();
-            } catch (err) {
-              const cats = await activeDashboard.getCategories(tableId);
-              fields = cats.map(c => ({ id: c.fieldId, name: c.fieldName, type: c.fieldType }));
+              const ranges = await activeDashboard.getTableDataRange(tableId);
+              if (Array.isArray(ranges) && ranges.length > 0) {
+                availableRanges = ranges;
+              }
+            } catch (e) {
+              availableRanges = [{ type: SourceType.ALL }];
             }
 
-            const fillSelect = (sel, allowEmptyText = '') => {
+            rangeSelect.innerHTML = '';
+            availableRanges.forEach((r, idx) => {
+              const opt = document.createElement('option');
+              opt.value = String(idx);
+              opt.textContent = r.type === SourceType.ALL ? 'Toàn bộ dữ liệu (ALL)' : `View: ${r.viewName || r.viewId}`;
+              rangeSelect.appendChild(opt);
+            });
+
+            const matchedRangeIdx = availableRanges.findIndex(r =>
+              r.type === currentConfig.dataRange?.type &&
+              (!r.viewId || r.viewId === currentConfig.dataRange?.viewId)
+            );
+            rangeSelect.value = String(matchedRangeIdx >= 0 ? matchedRangeIdx : 0);
+            currentConfig.dataRange = availableRanges[Number(rangeSelect.value)] || { type: SourceType.ALL };
+
+            // Lấy danh sách trường từ getCategories (chuẩn Dashboard API)
+            let categories = [];
+            try {
+              categories = await activeDashboard.getCategories(tableId);
+            } catch (e) {
+              const tbl = await activeBitable.base.getTableById(tableId);
+              const metas = await tbl.getFieldMetaList();
+              categories = metas.map(m => ({ fieldId: m.id, fieldName: m.name, fieldType: m.type }));
+            }
+
+            const fillFieldSelect = (sel) => {
               sel.innerHTML = '';
-              if (allowEmptyText) {
-                const emptyOpt = document.createElement('option');
-                emptyOpt.value = '';
-                emptyOpt.textContent = allowEmptyText;
-                sel.appendChild(emptyOpt);
-              }
-              fields.forEach(f => {
+              categories.forEach(c => {
                 const opt = document.createElement('option');
-                opt.value = f.id;
-                opt.textContent = f.name;
+                opt.value = c.fieldId;
+                opt.textContent = c.fieldName;
                 sel.appendChild(opt);
               });
             };
 
-            fillSelect(shopFieldSelect, '-- Không lọc Shop --');
-            fillSelect(dateFieldSelect, '-- Không lọc Ngày --');
-            fillSelect(monthFieldSelect, '-- Tự động theo Ngày --');
-            fillSelect(numFieldSelect);
-            fillSelect(denFieldSelect);
-            fillSelect(orderFieldSelect, '-- Không dùng --');
+            fillFieldSelect(groupFieldSelect);
+            fillFieldSelect(numFieldSelect);
+            fillFieldSelect(denFieldSelect);
 
-            if (!currentConfig.shopFieldId) {
-              const shopF = fields.find(f => /TÊN SHOP|^SHOP$/i.test(f.name.trim())) || fields[0];
-              if (shopF) currentConfig.shopFieldId = shopF.id;
+            if (!currentConfig.groupFieldId || !categories.some(c => c.fieldId === currentConfig.groupFieldId)) {
+              const shopCat = categories.find(c => /TÊN SHOP|^SHOP$/i.test(c.fieldName.trim())) || categories[0];
+              currentConfig.groupFieldId = shopCat?.fieldId || '';
             }
-            if (!currentConfig.dateFieldId) {
-              const dateF = fields.find(f => f.type === 5 || /^NGÀY$|THỜI GIAN NGÀY|DATE/i.test(f.name.trim()));
-              if (dateF) currentConfig.dateFieldId = dateF.id;
+            if (!currentConfig.numFieldId || !categories.some(c => c.fieldId === currentConfig.numFieldId)) {
+              const adsCat = categories.find(c => /CHI PHÍ ADS|CHI PHÍ QUẢNG CÁO/i.test(c.fieldName)) || categories[0];
+              currentConfig.numFieldId = adsCat?.fieldId || '';
             }
-            if (!currentConfig.monthFieldId) {
-              const monthF = fields.find(f => /THÁNG|^THỜI GIAN$/i.test(f.name.trim()) && f.id !== currentConfig.dateFieldId);
-              if (monthF) currentConfig.monthFieldId = monthF.id;
-            }
-            if (!currentConfig.numFieldId) {
-              const adsF = fields.find(f => /CHI PHÍ ADS|CHI PHÍ QUẢNG CÁO/i.test(f.name));
-              if (adsF) currentConfig.numFieldId = adsF.id;
-              else if (fields[0]) currentConfig.numFieldId = fields[0].id;
-            }
-            if (!currentConfig.denFieldId) {
-              const revF = fields.find(f => /DOANH THU THUẦN|DOANH THU/i.test(f.name));
-              if (revF) currentConfig.denFieldId = revF.id;
-              else if (fields[1]) currentConfig.denFieldId = fields[1].id;
-            }
-            if (!currentConfig.orderFieldId) {
-              const ordF = fields.find(f => /^SỐ ĐƠN$|ĐƠN HÀNG/i.test(f.name.trim()));
-              if (ordF) currentConfig.orderFieldId = ordF.id;
+            if (!currentConfig.denFieldId || !categories.some(c => c.fieldId === currentConfig.denFieldId)) {
+              const revCat = categories.find(c => /DOANH THU THUẦN|DOANH THU/i.test(c.fieldName)) || categories[1] || categories[0];
+              currentConfig.denFieldId = revCat?.fieldId || '';
             }
 
-            shopFieldSelect.value = currentConfig.shopFieldId;
-            dateFieldSelect.value = currentConfig.dateFieldId;
-            monthFieldSelect.value = currentConfig.monthFieldId;
+            groupFieldSelect.value = currentConfig.groupFieldId;
             numFieldSelect.value = currentConfig.numFieldId;
             denFieldSelect.value = currentConfig.denFieldId;
-            orderFieldSelect.value = currentConfig.orderFieldId;
 
-            await fetchRecordsAndCalculate();
+            await computeAndRender();
           }
 
-          await loadFieldsForTable(currentConfig.tableId);
+          await loadTablesForCurrentBase();
+
+          baseSelect.addEventListener('change', async () => {
+            currentConfig.baseToken = baseSelect.value;
+            currentConfig.tableId = '';
+            await switchBitableInstance(currentConfig.baseToken);
+            await loadTablesForCurrentBase();
+          });
 
           tableSelect.addEventListener('change', async () => {
             currentConfig.tableId = tableSelect.value;
-            currentConfig.shopFieldId = '';
-            currentConfig.dateFieldId = '';
-            currentConfig.monthFieldId = '';
+            currentConfig.groupFieldId = '';
             currentConfig.numFieldId = '';
             currentConfig.denFieldId = '';
-            currentConfig.orderFieldId = '';
-            cachedRecordsTableKey = '';
-            await loadFieldsForTable(currentConfig.tableId);
+            await loadRangesAndFields(currentConfig.tableId);
           });
 
-          const onConfigInputChanged = async () => {
-            currentConfig.layoutMode = layoutModeSelect.value;
-            currentConfig.shopFieldId = shopFieldSelect.value;
-            currentConfig.dateFieldId = dateFieldSelect.value;
-            currentConfig.monthFieldId = monthFieldSelect.value;
+          const onFormChange = async () => {
+            currentConfig.dataRange = availableRanges[Number(rangeSelect.value)] || { type: SourceType.ALL };
+            currentConfig.groupFieldId = groupFieldSelect.value;
             currentConfig.numFieldId = numFieldSelect.value;
             currentConfig.denFieldId = denFieldSelect.value;
-            currentConfig.orderFieldId = orderFieldSelect.value;
-            currentConfig.defaultDatePreset = defaultDatePresetSelect.value;
-            currentConfig.showFilterBar = showFilterBarSelect.value;
             currentConfig.title = titleInput.value;
             currentConfig.precision = Number(precisionSelect.value);
             currentConfig.showSub = showSubCheck.checked;
-
-            filterState.datePreset = currentConfig.defaultDatePreset;
-            syncFilterControlsUI();
-            await fetchRecordsAndCalculate();
+            await computeAndRender();
           };
 
-          [
-            layoutModeSelect,
-            shopFieldSelect,
-            dateFieldSelect,
-            monthFieldSelect,
-            numFieldSelect,
-            denFieldSelect,
-            orderFieldSelect,
-            defaultDatePresetSelect,
-            showFilterBarSelect,
-            precisionSelect,
-            showSubCheck
-          ].forEach(el => el.addEventListener('change', onConfigInputChanged));
-          titleInput.addEventListener('input', onConfigInputChanged);
+          [rangeSelect, groupFieldSelect, numFieldSelect, denFieldSelect, precisionSelect, showSubCheck].forEach(el => {
+            el.addEventListener('change', onFormChange);
+          });
+          titleInput.addEventListener('input', onFormChange);
 
           saveBtn.addEventListener('click', async () => {
             saveBtn.disabled = true;
             saveBtn.textContent = 'Đang lưu...';
             try {
-              const cond = {
-                tableId: currentConfig.tableId,
-                dataRange: { type: SourceType.ALL },
-                series: [
-                  { fieldId: currentConfig.numFieldId, rollup: Rollup.SUM },
-                  { fieldId: currentConfig.denFieldId, rollup: Rollup.SUM }
-                ]
-              };
-              if (currentConfig.baseToken) cond.baseToken = currentConfig.baseToken;
-              if (currentConfig.shopFieldId) {
-                cond.groups = [{
-                  fieldId: currentConfig.shopFieldId,
-                  mode: GroupMode.INTEGRATED,
-                  sort: { order: ORDER.ASCENDING, sortType: DATA_SOURCE_SORT_TYPE.VALUE }
-                }];
-              }
+              const cond = buildDataCondition();
               await activeDashboard.saveConfig({
                 dataConditions: [cond],
                 customConfig: { ...currentConfig }
               });
             } catch (err) {
-              showError('Lỗi khi lưu cấu hình: ' + (err?.message || String(err)));
+              setError('Lỗi khi lưu: ' + (err?.message || String(err)));
               saveBtn.disabled = false;
               saveBtn.textContent = 'Lưu vào Dashboard';
             }
           });
         } else {
-          // Chế độ View / FullScreen ngoài màn hình Dashboard
-          await fetchRecordsAndCalculate();
+          // Chế độ View ngoài Dashboard
+          await computeAndRender();
         }
 
-        if (activeDashboard.onDataChange) {
-          activeDashboard.onDataChange(async () => {
-            cachedRecordsTableKey = '';
-            await fetchRecordsAndCalculate();
-          });
+        // Lắng nghe sự kiện Slicer / dữ liệu thay đổi theo chuẩn baseDashboardMileStone
+        const handleDataChange = async (ev) => {
+          const incoming = ev?.data ?? ev;
+          if (Array.isArray(incoming) && incoming.length >= 2) {
+            await computeAndRender(incoming);
+          }
+          setTimeout(() => {
+            computeAndRender();
+          }, 600);
+        };
+
+        activeDashboard.onDataChange(handleDataChange);
+        if (activeDashboard !== dashboardSdk) {
+          dashboardSdk.onDataChange(handleDataChange);
         }
-        if (activeDashboard.onConfigChange) {
-          activeDashboard.onConfigChange(async () => {
-            cachedRecordsTableKey = '';
-            await fetchRecordsAndCalculate();
-          });
+
+        const handleConfigChange = async (ev) => {
+          const cfg = ev?.data ?? ev;
+          parseSavedConfig(cfg);
+          await switchBitableInstance(currentConfig.baseToken);
+          await computeAndRender();
+        };
+
+        activeDashboard.onConfigChange(handleConfigChange);
+        if (activeDashboard !== dashboardSdk) {
+          dashboardSdk.onConfigChange(handleConfigChange);
         }
       } catch (err) {
-        showError('Lỗi khởi tạo: ' + (err?.message || String(err)));
+        setError('Lỗi khởi tạo: ' + (err?.message || String(err)));
       }
     }
 
