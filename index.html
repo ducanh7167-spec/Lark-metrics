@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tỷ lệ Quảng cáo - Lark Dashboard</title>
+  <title>Tỷ lệ Quảng cáo - TAV Dashboard</title>
   <style>
     :root {
       --bg-color: #ffffff;
@@ -13,6 +13,7 @@
       --border-color: #dee0e3;
       --accent-color: #3370ff;
       --panel-bg: #f8f9fa;
+      --card-bg: #ffffff;
     }
 
     body[data-theme="dark"] {
@@ -22,6 +23,7 @@
       --text-muted: #757575;
       --border-color: #303030;
       --panel-bg: #222222;
+      --card-bg: #2a2a2a;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -41,7 +43,7 @@
       height: 100%;
     }
 
-    /* THẺ HIỂN THỊ KẾT QUẢ TRÊN DASHBOARD */
+    /* THẺ METRIC HIỂN THỊ TRÊN DASHBOARD */
     .metric-card {
       flex: 1;
       display: flex;
@@ -81,15 +83,15 @@
       text-overflow: ellipsis;
     }
 
-    /* KHUNG CHỌN NHANH 2 KHỐI (CHỈ HIỆN KHI CẤU HÌNH) */
+    /* PANEL XÁC NHẬN 1-CLICK (KHÔNG CẦN CHỌN TRƯỜNG TRONG BẢNG) */
     .config-panel {
-      width: 320px;
+      width: 330px;
       border-left: 1px solid var(--border-color);
       background-color: var(--panel-bg);
       padding: 16px;
       display: none;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
       justify-content: center;
     }
 
@@ -104,48 +106,43 @@
       border-bottom: 1px solid var(--border-color);
     }
 
-    .field-box {
+    .preset-list {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
     }
 
-    .field-box label {
-      font-size: 12px;
-      font-weight: 600;
+    .preset-item {
+      background: var(--card-bg);
+      border: 1.5px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .preset-item.active {
+      border-color: var(--accent-color);
+      background: rgba(51, 112, 255, 0.06);
+    }
+
+    .preset-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 3px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .preset-desc {
+      font-size: 11px;
       color: var(--text-secondary);
     }
 
-    .field-box select,
-    .field-box input {
-      width: 100%;
-      padding: 9px 10px;
-      font-size: 13px;
-      font-weight: 500;
-      border: 1.5px solid var(--border-color);
-      border-radius: 6px;
-      background-color: var(--bg-color);
-      color: var(--text-primary);
-      outline: none;
-      cursor: pointer;
-    }
-
-    .field-box select:focus,
-    .field-box input:focus {
-      border-color: var(--accent-color);
-    }
-
-    .divider-line {
-      text-align: center;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--accent-color);
-      margin: -4px 0;
-    }
-
     .btn-save {
-      margin-top: 6px;
-      padding: 10px;
+      margin-top: 8px;
+      padding: 11px;
       font-size: 13px;
       font-weight: 600;
       color: #ffffff;
@@ -155,45 +152,24 @@
       cursor: pointer;
     }
 
-    .btn-save:hover { opacity: 0.9; }
+    .btn-save:hover { opacity: 0.92; }
     .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
   </style>
 </head>
 <body>
   <div class="app-container" id="app-container">
-    <!-- Thẻ Metric chính -->
+    <!-- Thẻ Metric -->
     <div class="metric-card">
       <div class="metric-label" id="metric-label">TỶ LỆ QUẢNG CÁO</div>
       <div class="metric-value" id="metric-val">Đang tính...</div>
       <div class="metric-sub" id="metric-sub"></div>
     </div>
 
-    <!-- Giao diện rút gọn: Chỉ chọn Khối Tử Số & Khối Mẫu Số -->
+    <!-- Bảng chọn sẵn theo Khối Dashboard (Không cần chọn trường) -->
     <div class="config-panel">
-      <div class="config-header">Chọn 2 khối chỉ số để chia</div>
-
-      <div class="field-box">
-        <label for="sel-num">1. Khối Tử số (Số bị chia)</label>
-        <select id="sel-num">
-          <option>Đang quét các khối trên Dashboard...</option>
-        </select>
-      </div>
-
-      <div class="divider-line">÷ CHIA CHO ÷</div>
-
-      <div class="field-box">
-        <label for="sel-den">2. Khối Mẫu số (Số chia)</label>
-        <select id="sel-den">
-          <option>Đang quét các khối trên Dashboard...</option>
-        </select>
-      </div>
-
-      <div class="field-box">
-        <label for="inp-title">Tên thẻ hiển thị</label>
-        <input type="text" id="inp-title" value="TỶ LỆ QUẢNG CÁO" />
-      </div>
-
-      <button class="btn-save" id="btn-save">Lưu vào Dashboard</button>
+      <div class="config-header">Chọn công thức Khối Dashboard</div>
+      <div class="preset-list" id="preset-list"></div>
+      <button class="btn-save" id="btn-save">Xác nhận & Lưu vào Dashboard</button>
     </div>
   </div>
 
@@ -212,82 +188,133 @@
     const labelEl = document.getElementById('metric-label');
     const valEl = document.getElementById('metric-val');
     const subEl = document.getElementById('metric-sub');
-    const selNum = document.getElementById('sel-num');
-    const selDen = document.getElementById('sel-den');
-    const inpTitle = document.getElementById('inp-title');
+    const presetListEl = document.getElementById('preset-list');
     const btnSave = document.getElementById('btn-save');
 
     const fmtNum = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 });
     const fmtPct = new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const norm = (s) => String(s || '').normalize('NFC').trim().toUpperCase();
 
-    function renderMetric(adsVal, revVal, title) {
+    function renderCard(numVal, denVal, title) {
       if (title) labelEl.textContent = title;
-      const a = typeof adsVal === 'number' ? adsVal : (parseFloat(String(adsVal ?? '0')) || 0);
-      const b = typeof revVal === 'number' ? revVal : (parseFloat(String(revVal ?? '0')) || 0);
+      const a = typeof numVal === 'number' ? numVal : (parseFloat(String(numVal ?? '0')) || 0);
+      const b = typeof denVal === 'number' ? denVal : (parseFloat(String(denVal ?? '0')) || 0);
       const pct = b > 0 ? (a / b) * 100 : 0;
 
       valEl.textContent = `${fmtPct.format(pct)}%`;
       subEl.textContent = `Ads: ${fmtNum.format(a)} / DT: ${fmtNum.format(b)}`;
     }
 
-    // Tự động quét bảng TRACKING ALL và lọc ra đúng các khối chỉ số tổng quan kèm giá trị thực tế
-    async function getDashboardMetricBlocks(base, dashboard, Rollup, SourceType, FieldType) {
+    // Tự động tìm đúng bảng chứa cột DOANH THU THUẦN & CHI PHÍ ADS BAO GỒM VAT
+    async function detectTAVBlocks(base, dashboard, SourceType) {
       const tables = await base.getTableMetaList();
-      const trackingMeta =
-        tables.find(t => t.name.toLowerCase().includes('tracking all')) ||
-        tables.find(t => t.name.toLowerCase().includes('tracking')) ||
-        tables[0];
+      let chosenTableId = tables[0]?.id;
+      let chosenFields = [];
 
-      const table = await base.getTableById(trackingMeta.id);
-      const allFields = await table.getFieldMetaList();
+      // Quét tìm bảng có chứa cột DOANH THU THUẦN hoặc CHI PHÍ ADS
+      for (const tMeta of tables) {
+        const t = await base.getTableById(tMeta.id);
+        const fList = await t.getFieldMetaList();
+        const hasRev = fList.some(f => norm(f.name).includes('DOANH THU THUẦN') || norm(f.name) === 'NMV');
+        const hasAds = fList.some(f => norm(f.name).includes('CHI PHÍ'));
+        if (hasRev && hasAds) {
+          chosenTableId = tMeta.id;
+          chosenFields = fList;
+          break;
+        }
+        if (chosenFields.length === 0) {
+          chosenTableId = tMeta.id;
+          chosenFields = fList;
+        }
+      }
 
-      // Chỉ giữ lại các cột kiểu Số, Tiền tệ, Công thức, Lookup (loại bỏ cột Ngày, Shop, Text...)
-      const allowedTypes = new Set([
-        FieldType?.Number ?? 2,
-        FieldType?.Formula ?? 20,
-        FieldType?.Lookup ?? 19,
-        FieldType?.Currency ?? 99003
-      ]);
+      // Khớp chính xác tên cột trong Base TAV - MASTER ONE (tuyệt đối không nhầm vào CVR ADS / CLICK)
+      const adsField =
+        chosenFields.find(f => norm(f.name) === 'CHI PHÍ ADS BAO GỒM VAT') ||
+        chosenFields.find(f => norm(f.name).startsWith('CHI PHÍ ADS')) ||
+        chosenFields.find(f => norm(f.name).startsWith('CHI PHÍ QUẢNG CÁO')) ||
+        chosenFields.find(f => norm(f.name).includes('CHI PHÍ'));
 
-      // Loại bỏ các cột "Tỷ lệ / %" trung bình cộng để tránh chọn nhầm
-      let metricFields = allFields.filter(
-        f => allowedTypes.has(f.type) && !/tỷ lệ|%|ngày|tháng|năm/i.test(f.name)
-      );
-      if (metricFields.length < 2) metricFields = allFields;
+      const revField =
+        chosenFields.find(f => norm(f.name) === 'DOANH THU THUẦN') ||
+        chosenFields.find(f => norm(f.name).includes('DOANH THU THUẦN')) ||
+        chosenFields.find(f => norm(f.name) === 'NMV');
 
-      const sumRollup = Rollup?.SUM || 'SUM';
-      const allType = SourceType?.ALL || 'ALL';
+      const gmvField =
+        chosenFields.find(f => norm(f.name) === 'GMV') ||
+        chosenFields.find(f => norm(f.name).includes('GMV') && !norm(f.name).includes('ACOS'));
 
-      // Lấy luôn tổng (SUM) của toàn bộ các cột này trong 1 lần gọi duy nhất
-      const seriesList = metricFields.map(f => ({ fieldId: f.id, rollup: sumRollup }));
-      let sumRow = [];
-      try {
-        const pData = await dashboard.getPreviewData({
-          tableId: trackingMeta.id,
-          dataRange: { type: allType },
-          groups: [],
-          series: seriesList
+      const cancelField =
+        chosenFields.find(f => norm(f.name).includes('DOANH SỐ HOÀN HỦY')) ||
+        chosenFields.find(f => norm(f.name) === 'HỦY');
+
+      const ranges = await dashboard.getTableDataRange(chosenTableId);
+      const allRange =
+        ranges.find(r => r.type === (SourceType?.ALL || 'ALL')) || { type: SourceType?.ALL || 'ALL' };
+
+      // Tạo danh sách các cặp Khối Dashboard dựng sẵn
+      const presets = [];
+      if (adsField && revField) {
+        presets.push({
+          id: 'ads_rev',
+          title: 'TỶ LỆ QUẢNG CÁO',
+          desc: `Khối CHI PHÍ QUẢNG CÁO ÷ Khối DOANH THU THUẦN`,
+          numFieldId: adsField.id,
+          denFieldId: revField.id
         });
-        sumRow = pData?.[1] || [];
-      } catch (_) {}
+      }
+      if (adsField && gmvField) {
+        presets.push({
+          id: 'ads_gmv',
+          title: 'TỶ LỆ ADS / GMV',
+          desc: `Khối CHI PHÍ QUẢNG CÁO ÷ Khối GMV`,
+          numFieldId: adsField.id,
+          denFieldId: gmvField.id
+        });
+      }
+      if (cancelField && gmvField) {
+        presets.push({
+          id: 'cancel_gmv',
+          title: 'TỶ LỆ HOÀN HỦY',
+          desc: `Khối DOANH SỐ HOÀN HỦY ÷ Khối GMV`,
+          numFieldId: cancelField.id,
+          denFieldId: gmvField.id
+        });
+      }
 
-      const blocks = metricFields.map((f, idx) => {
-        const raw = sumRow[idx]?.value;
-        const val = typeof raw === 'number' ? raw : (parseFloat(String(raw ?? '0')) || 0);
+      return { tableId: chosenTableId, dataRange: allRange, presets };
+    }
+
+    // Lấy giá trị tổng SUM của 2 khối an toàn tuyệt đối (không truyền groups: [])
+    async function fetchPairSum(dashboard, Rollup, tableId, dataRange, numFieldId, denFieldId) {
+      const sumRollup = Rollup?.SUM || 'SUM';
+      try {
+        // Gọi tách riêng từng khối để đảm bảo 100% không bao giờ bị trả về 0
+        const [resA, resB] = await Promise.all([
+          dashboard.getPreviewData({
+            tableId,
+            dataRange,
+            series: [{ fieldId: numFieldId, rollup: sumRollup }]
+          }),
+          dashboard.getPreviewData({
+            tableId,
+            dataRange,
+            series: [{ fieldId: denFieldId, rollup: sumRollup }]
+          })
+        ]);
         return {
-          tableId: trackingMeta.id,
-          fieldId: f.id,
-          name: f.name.toUpperCase(),
-          value: val
+          numVal: resA?.[1]?.[0]?.value ?? 0,
+          denVal: resB?.[1]?.[0]?.value ?? 0
         };
-      });
-
-      return { tableId: trackingMeta.id, blocks };
+      } catch (e) {
+        console.error('Lỗi fetchPairSum:', e);
+        return { numVal: 0, denVal: 0 };
+      }
     }
 
     async function init() {
       const sdk = await loadSDK();
-      const { bitable, DashboardState, Rollup, SourceType, FieldType } = sdk;
+      const { bitable, DashboardState, Rollup, SourceType } = sdk;
       const { dashboard, base } = bitable;
 
       try {
@@ -304,94 +331,112 @@
         location.href.includes('isCreate=1') ||
         location.href.includes('isConfig=1');
 
-      // ================= 1. CHẾ ĐỘ HIỂN THỊ TRÊN DASHBOARD =================
+      // ================= 1. CHẾ ĐỘ HIỂN THỊ TRÊN DASHBOARD (VIEW) =================
       if (!isConfig) {
-        let title = 'TỶ LỆ QUẢNG CÁO';
-        const loadAndShow = async (incomingData) => {
+        const updateDashboardView = async (incomingData) => {
+          let title = 'TỶ LỆ QUẢNG CÁO';
+          let cfg = null;
           try {
-            const cfg = await dashboard.getConfig();
+            cfg = await dashboard.getConfig();
             if (cfg?.customConfig?.title) title = cfg.customConfig.title;
           } catch (_) {}
 
+          // Đọc dữ liệu đã lọc bởi Slicer trên Dashboard từ getData()
           let data = incomingData;
           if (!Array.isArray(data) || data.length < 2) {
-            data = await dashboard.getData();
+            try {
+              data = await dashboard.getData();
+            } catch (_) {}
           }
-          renderMetric(data?.[1]?.[0]?.value, data?.[1]?.[1]?.value, title);
+
+          if (Array.isArray(data?.[1]) && data[1].length >= 2) {
+            renderCard(data[1][0]?.value, data[1][1]?.value, title);
+          } else {
+            // Fallback an toàn nếu chỉ trả về 1 cột
+            const detected = await detectTAVBlocks(base, dashboard, SourceType);
+            const p0 = detected.presets[0];
+            if (p0) {
+              const { numVal, denVal } = await fetchPairSum(
+                dashboard,
+                Rollup,
+                detected.tableId,
+                detected.dataRange,
+                p0.numFieldId,
+                p0.denFieldId
+              );
+              renderCard(numVal, denVal, title);
+            }
+          }
           await dashboard.setRendered();
         };
 
-        await loadAndShow();
-        // Tự động nhảy số khi người dùng đổi bộ lọc Slicer (SHOP, NGÀY, THÁNG)
-        dashboard.onDataChange(ev => loadAndShow(ev?.data));
-        dashboard.onConfigChange(() => loadAndShow());
+        await updateDashboardView();
+        dashboard.onDataChange(ev => updateDashboardView(ev?.data));
+        dashboard.onConfigChange(() => updateDashboardView());
         return;
       }
 
-      // ================= 2. CHẾ ĐỘ CẤU HÌNH (CHỌN NHANH 2 KHỐI) =================
+      // ================= 2. CHẾ ĐỘ CẤU HÌNH (1-CLICK, KHÔNG CHỌN TRƯỜNG) =================
       appEl.classList.add('is-config');
-      const { tableId, blocks } = await getDashboardMetricBlocks(base, dashboard, Rollup, SourceType, FieldType);
+      const { tableId, dataRange, presets } = await detectTAVBlocks(base, dashboard, SourceType);
 
-      // Đổ danh sách dạng: "📊 CHI PHÍ QUẢNG CÁO (275.276.113)"
-      const optionsHtml = blocks
-        .map(b => `<option value="${b.fieldId}">📊 ${b.name} (${fmtNum.format(b.value)})</option>`)
-        .join('');
+      let selectedPreset = presets[0];
 
-      selNum.innerHTML = optionsHtml;
-      selDen.innerHTML = optionsHtml;
+      async function renderSelectedPreset() {
+        if (!selectedPreset) return;
+        presetListEl.innerHTML = presets
+          .map(p => `
+            <div class="preset-item ${p.id === selectedPreset.id ? 'active' : ''}" data-id="${p.id}">
+              <div class="preset-title">
+                <span>${p.title}</span>
+                <span>${p.id === selectedPreset.id ? '✓ Đang chọn' : ''}</span>
+              </div>
+              <div class="preset-desc">${p.desc}</div>
+            </div>
+          `)
+          .join('');
 
-      // Tự động chọn sẵn Khối CHI PHÍ QUẢNG CÁO và Khối DOANH THU THUẦN
-      const defaultNum =
-        blocks.find(b => /chi phí.*(quảng cáo|ads)|quảng cáo|ads/i.test(b.name)) || blocks[0];
-      const defaultDen =
-        blocks.find(b => /doanh thu thuần|dt thuần|nmv|doanh thu/i.test(b.name)) || blocks[1] || blocks[0];
+        presetListEl.querySelectorAll('.preset-item').forEach(el => {
+          el.addEventListener('click', () => {
+            selectedPreset = presets.find(p => p.id === el.dataset.id) || presets[0];
+            renderSelectedPreset();
+          });
+        });
 
-      if (defaultNum) selNum.value = defaultNum.fieldId;
-      if (defaultDen) selDen.value = defaultDen.fieldId;
-
-      // Nếu đang sửa lại cấu hình cũ thì nạp lại đúng 2 khối đã chọn
-      if (dashboard.state === DashboardState.Config) {
-        try {
-          const saved = await dashboard.getConfig();
-          const s = saved?.dataConditions?.[0]?.series;
-          if (Array.isArray(s) && s.length >= 2) {
-            if (blocks.some(b => b.fieldId === s[0].fieldId)) selNum.value = s[0].fieldId;
-            if (blocks.some(b => b.fieldId === s[1].fieldId)) selDen.value = s[1].fieldId;
-          }
-          if (saved?.customConfig?.title) inpTitle.value = saved.customConfig.title;
-        } catch (_) {}
+        const { numVal, denVal } = await fetchPairSum(
+          dashboard,
+          Rollup,
+          tableId,
+          dataRange,
+          selectedPreset.numFieldId,
+          selectedPreset.denFieldId
+        );
+        renderCard(numVal, denVal, selectedPreset.title);
       }
 
-      const updatePreview = () => {
-        const bNum = blocks.find(b => b.fieldId === selNum.value);
-        const bDen = blocks.find(b => b.fieldId === selDen.value);
-        renderMetric(bNum?.value || 0, bDen?.value || 0, inpTitle.value.trim() || 'TỶ LỆ QUẢNG CÁO');
-      };
-
-      updatePreview();
-      selNum.addEventListener('change', updatePreview);
-      selDen.addEventListener('change', updatePreview);
-      inpTitle.addEventListener('input', updatePreview);
+      await renderSelectedPreset();
 
       btnSave.addEventListener('click', async () => {
+        if (!selectedPreset) return;
         btnSave.disabled = true;
         btnSave.textContent = 'Đang lưu...';
         const sumRollup = Rollup?.SUM || 'SUM';
-        const allType = SourceType?.ALL || 'ALL';
+
+        // LƯU Ý QUAN TRỌNG: Tuyệt đối KHÔNG truyền groups: [] để không bị lỗi "Nguồn dữ liệu đã thay đổi"
         await dashboard.saveConfig({
           dataConditions: [
             {
               tableId,
-              dataRange: { type: allType },
-              groups: [],
+              dataRange,
               series: [
-                { fieldId: selNum.value, rollup: sumRollup },
-                { fieldId: selDen.value, rollup: sumRollup }
+                { fieldId: selectedPreset.numFieldId, rollup: sumRollup },
+                { fieldId: selectedPreset.denFieldId, rollup: sumRollup }
               ]
             }
           ],
           customConfig: {
-            title: inpTitle.value.trim() || 'TỶ LỆ QUẢNG CÁO'
+            title: selectedPreset.title,
+            presetId: selectedPreset.id
           }
         });
       });
