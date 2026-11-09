@@ -3,16 +3,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lark Dashboard Weighted Ratio Extension</title>
+  <title>Lark Base Weighted Metric & Slicer</title>
   <style>
     :root {
-      --bg-card: #ffffff;
-      --text-title: #646a73;
+      --bg-color: #ffffff;
       --text-main: #1f2329;
-      --text-sub: #8f959e;
+      --text-sub: #646a73;
+      --text-muted: #8f959e;
       --border-color: #dee0e3;
       --primary: #3370ff;
-      --primary-hover: #245bdb;
+      --primary-bg: #e1eaff;
+      --card-bg: #ffffff;
+      --card-highlight: linear-gradient(135deg, #ffe8d6 0%, #fff4eb 100%);
+      --pill-bg: #f2f3f5;
+      --pill-active-bg: #ffffff;
+    }
+    body.dark {
+      --bg-color: #191919;
+      --text-main: #f5f6f7;
+      --text-sub: #a6aeb8;
+      --text-muted: #757c85;
+      --border-color: #373c43;
+      --card-bg: #222326;
+      --card-highlight: linear-gradient(135deg, #3a2a1d 0%, #26201b 100%);
+      --pill-bg: #2b2c2f;
+      --pill-active-bg: #373c43;
     }
     * {
       box-sizing: border-box;
@@ -23,7 +38,7 @@
     html, body {
       width: 100%;
       height: 100%;
-      background: var(--bg-card);
+      background: transparent;
       color: var(--text-main);
       overflow: hidden;
     }
@@ -33,78 +48,254 @@
       height: 100%;
     }
 
-    /* Khu vực hiển thị thẻ Metric */
-    .preview-pane {
+    /* Khu vực hiển thị chính */
+    .main-area {
       flex: 1;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      padding: 14px 18px;
-      min-width: 0;
+      justify-content: space-between;
+      padding: 12px 16px;
+      height: 100%;
       overflow: hidden;
       position: relative;
     }
-    .metric-label {
+
+    /* Thanh Slicer tích hợp */
+    .slicer-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+      z-index: 10;
+    }
+    .slicer-bar.hidden {
+      display: none !important;
+    }
+
+    /* Chế độ 1: Thanh lọc mini gọn trên thẻ đơn */
+    .mini-filter-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+    .mini-select, .mini-date {
+      height: 24px;
+      padding: 0 6px;
+      border-radius: 5px;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      color: var(--text-main);
+      font-size: 11px;
+      font-weight: 500;
+      outline: none;
+      cursor: pointer;
+      max-width: 135px;
+      text-overflow: ellipsis;
+    }
+    .mini-select:focus, .mini-date:focus {
+      border-color: var(--primary);
+    }
+    .custom-date-box {
+      display: none;
+      align-items: center;
+      gap: 4px;
+    }
+    .custom-date-box.show {
+      display: inline-flex;
+    }
+
+    /* Chế độ 2: Thanh Slicer giống hệt Lark Dashboard */
+    .full-slicer-row {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .mode-allinone .full-slicer-row {
+      display: flex;
+    }
+    .mode-allinone .mini-filter-row {
+      display: none;
+    }
+    .slicer-group {
+      display: flex;
+      align-items: center;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 4px 8px;
+      gap: 6px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .slicer-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-sub);
+      white-space: nowrap;
+      margin-right: 2px;
+    }
+    .shop-pills {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--pill-bg);
+      padding: 3px;
+      border-radius: 6px;
+      overflow-x: auto;
+      max-width: 480px;
+      scrollbar-width: none;
+    }
+    .shop-pills::-webkit-scrollbar {
+      display: none;
+    }
+    .shop-pill {
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-sub);
+      cursor: pointer;
+      white-space: nowrap;
+      border: none;
+      background: transparent;
+      transition: all 0.15s;
+    }
+    .shop-pill.active {
+      background: var(--pill-active-bg);
+      color: var(--text-main);
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .slicer-dropdown {
+      border: none;
+      background: transparent;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-main);
+      outline: none;
+      cursor: pointer;
+      padding: 2px 4px;
+    }
+
+    /* Hiển thị Thẻ đơn (Chế độ 1) */
+    .single-card-view {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      flex: 1;
+      min-height: 0;
+    }
+    .mode-allinone .single-card-view {
+      display: none;
+    }
+    .metric-title {
       font-size: 13px;
       font-weight: 600;
-      color: var(--text-title);
-      text-transform: uppercase;
+      color: var(--text-sub);
+      margin-bottom: 4px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      margin-bottom: 6px;
+      text-transform: uppercase;
       letter-spacing: 0.2px;
     }
     .metric-value {
-      font-size: clamp(24px, 14vw, 36px);
+      font-size: clamp(24px, 16vw, 38px);
       font-weight: 700;
-      color: var(--text-main);
       line-height: 1.15;
+      color: var(--text-main);
+      font-variant-numeric: tabular-nums;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      font-variant-numeric: tabular-nums;
     }
     .metric-sub {
-      margin-top: 6px;
+      margin-top: 4px;
       font-size: 11px;
-      color: var(--text-sub);
+      color: var(--text-muted);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .unconfigured-badge {
+
+    /* Hiển thị 4 Thẻ KPI All-in-One (Chế độ 2) */
+    .four-cards-grid {
       display: none;
-      margin-top: 6px;
-      padding: 4px 8px;
-      background: #fff7e6;
-      border: 1px solid #ffd591;
-      border-radius: 4px;
-      color: #d46b08;
-      font-size: 11px;
-      line-height: 1.35;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      flex: 1;
+      align-items: stretch;
+      min-height: 0;
     }
-    .unconfigured-badge.visible {
-      display: inline-block;
+    .mode-allinone .four-cards-grid {
+      display: grid;
+    }
+    .kpi-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      min-width: 0;
+    }
+    .kpi-card.highlight {
+      background: var(--card-highlight);
+      border-color: rgba(255, 140, 0, 0.25);
+    }
+    .kpi-card .kpi-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-sub);
+      margin-bottom: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+    }
+    .kpi-card .kpi-num {
+      font-size: clamp(20px, 2.8vw, 34px);
+      font-weight: 700;
+      color: var(--text-main);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .kpi-card .kpi-note {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    /* Khu vực cấu hình bên phải (chỉ hiện ở chế độ Create / Config) */
-    .config-pane {
-      width: 340px;
+    /* Panel cấu hình bên phải (chỉ hiện ở chế độ Create / Config) */
+    .config-panel {
+      width: 350px;
+      height: 100%;
       border-left: 1px solid var(--border-color);
+      background: var(--bg-color);
       padding: 14px 16px;
+      overflow-y: auto;
       display: none;
       flex-direction: column;
       gap: 11px;
-      overflow-y: auto;
-      background: #fafbfc;
     }
-    #app.is-config .config-pane {
+    body.is-config .config-panel {
       display: flex;
     }
     .config-header {
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 700;
       color: var(--text-main);
       padding-bottom: 8px;
       border-bottom: 1px solid var(--border-color);
@@ -114,756 +305,1079 @@
       flex-direction: column;
       gap: 4px;
     }
-    .form-group label {
+    .form-label {
       font-size: 12px;
       font-weight: 600;
-      color: var(--text-title);
+      color: var(--text-sub);
     }
     .form-hint {
       font-size: 11px;
-      color: var(--text-sub);
+      color: var(--text-muted);
       line-height: 1.35;
     }
     .form-control {
       width: 100%;
-      padding: 7px 10px;
-      font-size: 13px;
+      height: 32px;
+      padding: 0 8px;
       border: 1px solid var(--border-color);
       border-radius: 6px;
-      background: #fff;
+      background: var(--bg-color);
       color: var(--text-main);
+      font-size: 12px;
       outline: none;
-      transition: border-color 0.15s;
     }
     .form-control:focus {
       border-color: var(--primary);
     }
-    .row-2col {
+    .row-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    .checkbox-line {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      color: var(--text-main);
-      cursor: pointer;
-      user-select: none;
+      gap: 8px;
     }
     .btn-save {
       margin-top: auto;
-      padding: 10px 14px;
+      width: 100%;
+      height: 36px;
+      border: none;
+      border-radius: 6px;
       background: var(--primary);
       color: #fff;
       font-size: 13px;
       font-weight: 600;
-      border: none;
-      border-radius: 6px;
       cursor: pointer;
-      transition: background 0.15s;
     }
     .btn-save:hover {
-      background: var(--primary-hover);
+      opacity: 0.92;
     }
     .btn-save:disabled {
-      opacity: 0.6;
+      opacity: 0.5;
       cursor: not-allowed;
     }
     .error-msg {
       color: #f54a45;
       font-size: 12px;
       margin-top: 4px;
-      white-space: pre-wrap;
     }
   </style>
 </head>
 <body>
   <div id="app">
-    <!-- Màn hình hiển thị thẻ tỷ lệ -->
-    <div class="preview-pane">
-      <div class="metric-label" id="ui-title">TỶ LỆ QUẢNG CÁO</div>
-      <div class="metric-value" id="ui-value">--%</div>
-      <div class="metric-sub" id="ui-sub">Đang tải dữ liệu...</div>
-      <div class="unconfigured-badge" id="ui-badge">
-        ⚠️ Chưa liên kết Slicer: Bấm <b>"..."</b> góc phải khối ➔ <b>Cấu hình</b> ➔ <b>Lưu vào Dashboard</b>
+    <!-- KHU VỰC HIỂN THỊ METRIC & SLICER -->
+    <div class="main-area" id="mainArea">
+      <!-- Thanh Slicer tích hợp -->
+      <div class="slicer-bar" id="slicerBar">
+        <!-- Giao diện lọc gọn cho Chế độ 1 (Thẻ đơn) -->
+        <div class="mini-filter-row" id="miniFilterRow">
+          <select id="miniShopSelect" class="mini-select" title="Lọc theo Shop">
+            <option value="ALL">Shop: Tất cả</option>
+          </select>
+          <select id="miniDateSelect" class="mini-select" title="Lọc theo Thời gian ngày">
+            <option value="last_30_days">30 ngày qua</option>
+            <option value="ALL">Mọi ngày</option>
+            <option value="last_7_days">7 ngày qua</option>
+            <option value="this_month">Tháng này</option>
+            <option value="last_month">Tháng trước</option>
+            <option value="today">Hôm nay</option>
+            <option value="yesterday">Hôm qua</option>
+            <option value="custom">Tùy chọn ngày...</option>
+          </select>
+          <select id="miniMonthSelect" class="mini-select" title="Lọc theo Tháng" style="display:none;">
+            <option value="ALL">Tháng: Tất cả</option>
+          </select>
+          <div class="custom-date-box" id="miniCustomDateBox">
+            <input type="date" id="miniStartDate" class="mini-date" />
+            <span style="font-size:10px;color:var(--text-muted)">-</span>
+            <input type="date" id="miniEndDate" class="mini-date" />
+          </div>
+        </div>
+
+        <!-- Giao diện Slicer đầy đủ cho Chế độ 2 (4 Thẻ All-in-One) -->
+        <div class="full-slicer-row" id="fullSlicerRow">
+          <div class="slicer-group">
+            <span class="slicer-label">SHOP</span>
+            <div class="shop-pills" id="shopPillsContainer">
+              <button class="shop-pill active" data-shop="ALL">Tất cả</button>
+            </div>
+          </div>
+          <div class="slicer-group" id="fullMonthGroup" style="display:none;">
+            <span class="slicer-label">THỜI GIAN</span>
+            <select id="fullMonthSelect" class="slicer-dropdown">
+              <option value="ALL">Chọn (Tất cả)</option>
+            </select>
+          </div>
+          <div class="slicer-group">
+            <span class="slicer-label">THỜI GIAN NGÀY</span>
+            <select id="fullDateSelect" class="slicer-dropdown">
+              <option value="last_30_days">trong 30 ngày qua</option>
+              <option value="ALL">Tất cả thời gian</option>
+              <option value="last_7_days">trong 7 ngày qua</option>
+              <option value="this_month">Tháng này</option>
+              <option value="last_month">Tháng trước</option>
+              <option value="today">Hôm nay</option>
+              <option value="yesterday">Hôm qua</option>
+              <option value="custom">Tùy chọn ngày...</option>
+            </select>
+            <div class="custom-date-box" id="fullCustomDateBox">
+              <input type="date" id="fullStartDate" class="mini-date" />
+              <span style="font-size:11px;color:var(--text-muted)">đến</span>
+              <input type="date" id="fullEndDate" class="mini-date" />
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="error-msg" id="ui-error" style="display:none;"></div>
+
+      <!-- Chế độ 1: Thẻ đơn TỶ LỆ QUẢNG CÁO -->
+      <div class="single-card-view" id="singleCardView">
+        <div class="metric-title" id="uiTitle">TỶ LỆ QUẢNG CÁO</div>
+        <div class="metric-value" id="uiValue">--%</div>
+        <div class="metric-sub" id="uiSub">Đang tải dữ liệu...</div>
+        <div class="error-msg" id="uiError" style="display:none;"></div>
+      </div>
+
+      <!-- Chế độ 2: Cụm 4 Thẻ KPI All-in-One -->
+      <div class="four-cards-grid" id="fourCardsGrid">
+        <div class="kpi-card highlight">
+          <div class="kpi-label">DOANH THU THUẦN (VND)</div>
+          <div class="kpi-num" id="kpiRev">--</div>
+          <div class="kpi-note" id="kpiRevNote">Tổng doanh thu sau lọc</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">CHI PHÍ QUẢNG CÁO (VND)</div>
+          <div class="kpi-num" id="kpiAds">--</div>
+          <div class="kpi-note" id="kpiAdsNote">Tổng chi phí Ads sau lọc</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label" id="kpiRatioLabel">TỶ LỆ QUẢNG CÁO</div>
+          <div class="kpi-num" id="kpiRatio">--%</div>
+          <div class="kpi-note" id="kpiRatioNote">∑Chi phí Ads / ∑Doanh thu</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">SỐ ĐƠN</div>
+          <div class="kpi-num" id="kpiOrders">--</div>
+          <div class="kpi-note" id="kpiOrdersNote">Tổng số đơn hàng</div>
+        </div>
+      </div>
     </div>
 
-    <!-- Bảng cấu hình bên phải -->
-    <div class="config-pane">
-      <div class="config-header">Cấu hình Tỷ lệ Trọng số (ΣA / ΣB)</div>
+    <!-- PANEL CẤU HÌNH (Chỉ hiện khi bấm Thiết lập) -->
+    <div class="config-panel" id="configPanel">
+      <div class="config-header">Cấu hình Tỷ lệ Trọng số (∑A / ∑B)</div>
 
-      <div class="form-group" id="grp-base" style="display:none;">
-        <label for="sel-base">0. Nguồn Base (Bitable App)</label>
-        <select id="sel-base" class="form-control"></select>
+      <div class="form-group">
+        <label class="form-label">Chế độ giao diện</label>
+        <select id="layoutModeSelect" class="form-control">
+          <option value="single">1. Thẻ đơn: TỶ LỆ QUẢNG CÁO (Kèm lọc gọn)</option>
+          <option value="allinone">2. All-in-One: Thanh Slicer + Đủ 4 Thẻ Metric</option>
+        </select>
       </div>
 
       <div class="form-group">
-        <label for="sel-table">1. Bảng dữ liệu nguồn</label>
-        <select id="sel-table" class="form-control"></select>
+        <label class="form-label">1. Bảng dữ liệu nguồn</label>
+        <select id="tableSelect" class="form-control"></select>
       </div>
 
-      <div class="form-group">
-        <label for="sel-group">2. Trường phân nhóm (Liên kết Slicer)</label>
-        <select id="sel-group" class="form-control"></select>
-        <div class="form-hint">Chọn <b>TÊN SHOP</b> để Lark đồng bộ với mọi bộ lọc Slicer trên Dashboard.</div>
-      </div>
-
-      <div class="form-group">
-        <label for="sel-num">3. Tử số — Tổng A (Chi phí Ads)</label>
-        <select id="sel-num" class="form-control"></select>
-      </div>
-
-      <div class="form-group">
-        <label for="sel-den">4. Mẫu số — Tổng B (Doanh thu thuần)</label>
-        <select id="sel-den" class="form-control"></select>
-      </div>
-
-      <div class="form-group">
-        <label for="inp-title">5. Tiêu đề thẻ</label>
-        <input id="inp-title" type="text" class="form-control" value="TỶ LỆ QUẢNG CÁO" />
-      </div>
-
-      <div class="row-2col">
+      <div class="row-2">
         <div class="form-group">
-          <label for="sel-decimals">Số lẻ thập phân</label>
-          <select id="sel-decimals" class="form-control">
-            <option value="2" selected>2 chữ số (29,34%)</option>
-            <option value="1">1 chữ số (29,3%)</option>
-            <option value="0">Làm tròn (29%)</option>
+          <label class="form-label">2. Cột Shop (Lọc Shop)</label>
+          <select id="shopFieldSelect" class="form-control"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">3. Cột Ngày (Lọc 30 ngày)</label>
+          <select id="dateFieldSelect" class="form-control"></select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">4. Cột Tháng (Tuỳ chọn lọc theo Tháng)</label>
+        <select id="monthFieldSelect" class="form-control"></select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">5. Tử số — Tổng A (VD: CHI PHÍ ADS BAO GỒM VAT)</label>
+        <select id="numFieldSelect" class="form-control"></select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">6. Mẫu số — Tổng B (VD: DOANH THU THUẦN)</label>
+        <select id="denFieldSelect" class="form-control"></select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">7. Cột Số đơn (Dùng cho chế độ 4 thẻ)</label>
+        <select id="orderFieldSelect" class="form-control"></select>
+      </div>
+
+      <div class="row-2">
+        <div class="form-group">
+          <label class="form-label">Lọc ngày mặc định</label>
+          <select id="defaultDatePresetSelect" class="form-control">
+            <option value="last_30_days">Trong 30 ngày qua</option>
+            <option value="ALL">Tất cả thời gian</option>
+            <option value="last_7_days">Trong 7 ngày qua</option>
+            <option value="this_month">Tháng này</option>
+            <option value="last_month">Tháng trước</option>
           </select>
         </div>
         <div class="form-group">
-          <label for="inp-color">Màu chữ chính</label>
-          <input id="inp-color" type="color" class="form-control" value="#1f2329" style="height:34px;padding:3px 6px;" />
+          <label class="form-label">Thanh lọc trên thẻ</label>
+          <select id="showFilterBarSelect" class="form-control">
+            <option value="show">Hiển thị để chọn nhanh</option>
+            <option value="hide">Ẩn (Chỉ dùng mặc định)</option>
+          </select>
         </div>
       </div>
 
-      <label class="checkbox-line">
-        <input type="checkbox" id="chk-sub" checked />
+      <div class="row-2">
+        <div class="form-group">
+          <label class="form-label">Tiêu đề thẻ</label>
+          <input type="text" id="titleInput" class="form-control" value="TỶ LỆ QUẢNG CÁO" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Số lẻ thập phân</label>
+          <select id="precisionSelect" class="form-control">
+            <option value="2" selected>2 chữ số (29,34%)</option>
+            <option value="1">1 chữ số (29,3%)</option>
+            <option value="0">Số nguyên (29%)</option>
+          </select>
+        </div>
+      </div>
+
+      <label style="font-size:12px; display:flex; align-items:center; gap:6px; cursor:pointer;">
+        <input type="checkbox" id="showSubCheck" checked />
         Hiển thị dòng phụ (Tổng Ads / Tổng Doanh thu)
       </label>
 
-      <button id="btn-save" class="btn-save">Lưu vào Dashboard</button>
+      <button id="saveBtn" class="btn-save">Lưu vào Dashboard</button>
     </div>
   </div>
 
   <script type="module">
-    let sdk;
-    try {
-      sdk = await import('https://cdn.jsdelivr.net/npm/@lark-base-open/js-sdk@1.0.2/+esm');
-    } catch (e) {
-      sdk = await import('https://esm.sh/@lark-base-open/js-sdk@1.0.2');
+    async function loadBitableSDK() {
+      const urls = [
+        'https://cdn.jsdelivr.net/npm/@lark-base-open/js-sdk@1.0.2/+esm',
+        'https://esm.sh/@lark-base-open/js-sdk@1.0.2',
+        'https://esm.sh/@lark-base-open/js-sdk@0.5.0'
+      ];
+      for (const url of urls) {
+        try {
+          return await import(url);
+        } catch (err) {
+          console.warn('Thử tải SDK từ nguồn tiếp theo:', url, err);
+        }
+      }
+      throw new Error('Không thể tải thư viện @lark-base-open/js-sdk.');
     }
 
-    const {
-      bitable: bitableSdk,
-      bridge: bridgeSdk,
-      workspace,
-      DashboardState,
-      Rollup,
-      SourceType,
-      GroupMode,
-      ORDER,
-      DATA_SOURCE_SORT_TYPE
-    } = sdk;
+    const mainArea = document.getElementById('mainArea');
+    const slicerBar = document.getElementById('slicerBar');
+    const miniShopSelect = document.getElementById('miniShopSelect');
+    const miniDateSelect = document.getElementById('miniDateSelect');
+    const miniMonthSelect = document.getElementById('miniMonthSelect');
+    const miniCustomDateBox = document.getElementById('miniCustomDateBox');
+    const miniStartDate = document.getElementById('miniStartDate');
+    const miniEndDate = document.getElementById('miniEndDate');
 
-    const appEl = document.getElementById('app');
-    const uiTitle = document.getElementById('ui-title');
-    const uiValue = document.getElementById('ui-value');
-    const uiSub = document.getElementById('ui-sub');
-    const uiBadge = document.getElementById('ui-badge');
-    const uiError = document.getElementById('ui-error');
+    const shopPillsContainer = document.getElementById('shopPillsContainer');
+    const fullMonthGroup = document.getElementById('fullMonthGroup');
+    const fullMonthSelect = document.getElementById('fullMonthSelect');
+    const fullDateSelect = document.getElementById('fullDateSelect');
+    const fullCustomDateBox = document.getElementById('fullCustomDateBox');
+    const fullStartDate = document.getElementById('fullStartDate');
+    const fullEndDate = document.getElementById('fullEndDate');
 
-    const grpBase = document.getElementById('grp-base');
-    const selBase = document.getElementById('sel-base');
-    const selTable = document.getElementById('sel-table');
-    const selGroup = document.getElementById('sel-group');
-    const selNum = document.getElementById('sel-num');
-    const selDen = document.getElementById('sel-den');
-    const inpTitle = document.getElementById('inp-title');
-    const selDecimals = document.getElementById('sel-decimals');
-    const inpColor = document.getElementById('inp-color');
-    const chkSub = document.getElementById('chk-sub');
-    const btnSave = document.getElementById('btn-save');
+    const uiTitle = document.getElementById('uiTitle');
+    const uiValue = document.getElementById('uiValue');
+    const uiSub = document.getElementById('uiSub');
+    const uiError = document.getElementById('uiError');
 
-    let isMultipleBase = false;
-    let activeBitable = bitableSdk;
-    let activeDashboard = bitableSdk.dashboard;
-    let activeBase = bitableSdk.base;
-    let activeDataRange = { type: (SourceType && SourceType.ALL) ? SourceType.ALL : 'ALL' };
+    const kpiRev = document.getElementById('kpiRev');
+    const kpiAds = document.getElementById('kpiAds');
+    const kpiRatioLabel = document.getElementById('kpiRatioLabel');
+    const kpiRatio = document.getElementById('kpiRatio');
+    const kpiRatioNote = document.getElementById('kpiRatioNote');
+    const kpiOrders = document.getElementById('kpiOrders');
 
-    let currentConfig = {
-      baseToken: '',
-      tableId: '',
-      groupFieldId: '',
-      numFieldId: '',
-      denFieldId: '',
-      title: 'TỶ LỆ QUẢNG CÁO',
-      decimals: 2,
-      color: '#1f2329',
-      showSub: true
-    };
+    const layoutModeSelect = document.getElementById('layoutModeSelect');
+    const tableSelect = document.getElementById('tableSelect');
+    const shopFieldSelect = document.getElementById('shopFieldSelect');
+    const dateFieldSelect = document.getElementById('dateFieldSelect');
+    const monthFieldSelect = document.getElementById('monthFieldSelect');
+    const numFieldSelect = document.getElementById('numFieldSelect');
+    const denFieldSelect = document.getElementById('denFieldSelect');
+    const orderFieldSelect = document.getElementById('orderFieldSelect');
+    const defaultDatePresetSelect = document.getElementById('defaultDatePresetSelect');
+    const showFilterBarSelect = document.getElementById('showFilterBarSelect');
+    const titleInput = document.getElementById('titleInput');
+    const precisionSelect = document.getElementById('precisionSelect');
+    const showSubCheck = document.getElementById('showSubCheck');
+    const saveBtn = document.getElementById('saveBtn');
 
     function showError(msg) {
-      if (!msg) {
-        uiError.style.display = 'none';
-        uiError.textContent = '';
-      } else {
-        uiError.style.display = 'block';
-        uiError.textContent = msg;
-      }
+      uiError.style.display = 'block';
+      uiError.textContent = msg;
+    }
+    function clearError() {
+      uiError.style.display = 'none';
+      uiError.textContent = '';
     }
 
-    function toNumber(val) {
-      if (typeof val === 'number') return Number.isFinite(val) ? val : 0;
+    function parseNumber(val) {
       if (val === null || val === undefined || val === '') return 0;
+      if (typeof val === 'number') return isFinite(val) ? val : 0;
+      if (Array.isArray(val)) {
+        return val.reduce((acc, item) => acc + parseNumber(item), 0);
+      }
       if (typeof val === 'object') {
-        if ('value' in val) return toNumber(val.value);
-        if (Array.isArray(val)) return val.reduce((s, x) => s + toNumber(x), 0);
+        if ('value' in val) return parseNumber(val.value);
+        if ('text' in val) return parseNumber(val.text);
+        return 0;
       }
-      const n = Number(val);
-      if (Number.isFinite(n)) return n;
-      const cleaned = String(val).replace(/[^0-9.-]+/g, '');
-      const parsed = parseFloat(cleaned);
-      return Number.isFinite(parsed) ? parsed : 0;
+      const str = String(val).trim();
+      if (!str) return 0;
+      const cleaned = str.replace(/[^\d.,-]/g, '');
+      if (!cleaned) return 0;
+      if (/^-?\d+(\.\d{3})+$/.test(cleaned)) {
+        return Number(cleaned.replace(/\./g, '')) || 0;
+      }
+      if (/^-?\d+(,\d{3})+$/.test(cleaned)) {
+        return Number(cleaned.replace(/,/g, '')) || 0;
+      }
+      const normalized = cleaned.replace(/,/g, '');
+      const num = Number(normalized);
+      return isFinite(num) ? num : 0;
     }
 
-    function getFieldTypeLabel(type) {
-      switch (type) {
-        case 2: return 'Số';
-        case 99003: return 'Tiền tệ';
-        case 20: return 'Công thức';
-        case 19: return 'Tra cứu';
-        case 1: return 'Văn bản';
-        case 3: return 'Chọn một';
-        case 4: return 'Chọn nhiều';
-        case 5: return 'Ngày';
-        default: return '';
+    function parseText(val) {
+      if (val === null || val === undefined) return '';
+      if (typeof val === 'string') return val.trim();
+      if (typeof val === 'number') return String(val);
+      if (Array.isArray(val)) {
+        return val.map(parseText).filter(Boolean).join(', ').trim();
       }
+      if (typeof val === 'object') {
+        if (typeof val.text === 'string') return val.text.trim();
+        if (typeof val.name === 'string') return val.name.trim();
+        if ('value' in val) return parseText(val.value);
+      }
+      return '';
     }
 
-    /**
-     * Khởi tạo ngữ cảnh Bitable App (workspace.getBitable) theo đúng baseToken
-     */
-    async function switchBaseContext(baseToken) {
-      if (baseToken && workspace && typeof workspace.getBitable === 'function') {
-        try {
-          const scoped = await workspace.getBitable(baseToken);
-          if (scoped) {
-            activeBitable = scoped;
-            activeDashboard = scoped.dashboard || bitableSdk.dashboard;
-            activeBase = scoped.base || bitableSdk.base;
-            return;
-          }
-        } catch (e) {
-          console.warn('workspace.getBitable fallback:', e);
+    function parseDateMs(val) {
+      if (val === null || val === undefined || val === '') return null;
+      if (typeof val === 'number') {
+        if (val > 1e11) return val;
+        if (val > 1e9) return val * 1000;
+        if (val > 20000 && val < 90000) return Math.round((val - 25569) * 86400000);
+        return null;
+      }
+      if (Array.isArray(val)) {
+        for (const item of val) {
+          const ms = parseDateMs(item);
+          if (ms !== null) return ms;
         }
+        return null;
       }
-      activeBitable = bitableSdk;
-      activeDashboard = bitableSdk.dashboard;
-      activeBase = bitableSdk.base;
-    }
-
-    /**
-     * Xây dựng IDataCondition có đầy đủ baseToken + tableId + dataRange + groups + series
-     */
-    function buildCondition(cfg) {
-      const isSameField = cfg.numFieldId === cfg.denFieldId;
-      const sumRollup = (Rollup && Rollup.SUM) ? Rollup.SUM : 'SUM';
-      const series = isSameField
-        ? [{ fieldId: cfg.numFieldId, rollup: sumRollup }]
-        : [
-            { fieldId: cfg.numFieldId, rollup: sumRollup },
-            { fieldId: cfg.denFieldId, rollup: sumRollup }
-          ];
-
-      const condition = {
-        tableId: cfg.tableId,
-        dataRange: activeDataRange || { type: (SourceType && SourceType.ALL) ? SourceType.ALL : 'ALL' },
-        series
-      };
-
-      if (cfg.baseToken) {
-        condition.baseToken = cfg.baseToken;
-      }
-
-      if (cfg.groupFieldId) {
-        condition.groups = [
-          {
-            fieldId: cfg.groupFieldId,
-            mode: (GroupMode && GroupMode.ENUMERATED) ? GroupMode.ENUMERATED : 'enumerated',
-            sort: {
-              order: (ORDER && ORDER.ASCENDING) ? ORDER.ASCENDING : 1,
-              sortType: (DATA_SOURCE_SORT_TYPE && DATA_SOURCE_SORT_TYPE.VALUE) ? DATA_SOURCE_SORT_TYPE.VALUE : 'VALUE'
-            }
-          }
-        ];
-      }
-
-      return condition;
-    }
-
-    function extractTotals(data, cfg) {
-      if (!Array.isArray(data) || data.length < 2) {
-        return { num: 0, den: 0 };
-      }
-
-      const isSameField = cfg && cfg.numFieldId && cfg.numFieldId === cfg.denFieldId;
-      const hasGroup = Boolean(cfg && cfg.groupFieldId);
-
-      let totalNum = 0;
-      let totalDen = 0;
-
-      for (let r = 1; r < data.length; r++) {
-        const row = data[r];
-        if (!Array.isArray(row) || row.length === 0) continue;
-
-        if (hasGroup && row.length >= 2) {
-          const numVal = toNumber(row[1]?.value);
-          const denVal = isSameField ? numVal : toNumber(row[2]?.value);
-          totalNum += numVal;
-          totalDen += denVal;
-        } else {
-          const numVal = toNumber(row[0]?.value);
-          const denVal = (isSameField || row.length < 2) ? numVal : toNumber(row[1]?.value);
-          totalNum += numVal;
-          totalDen += denVal;
+      if (typeof val === 'object') {
+        if ('value' in val) {
+          const ms = parseDateMs(val.value);
+          if (ms !== null) return ms;
         }
+        if ('text' in val) {
+          const ms = parseDateMs(val.text);
+          if (ms !== null) return ms;
+        }
+        return null;
       }
-
-      return { num: totalNum, den: totalDen };
+      const str = String(val).trim();
+      if (!str) return null;
+      if (/^\d{10,13}$/.test(str)) {
+        const n = Number(str);
+        return str.length === 10 ? n * 1000 : n;
+      }
+      const dmy = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      if (dmy) {
+        const d = Number(dmy[1]);
+        const m = Number(dmy[2]);
+        const y = Number(dmy[3]);
+        return new Date(y, m - 1, d, 12, 0, 0).getTime();
+      }
+      const ymd = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+      if (ymd) {
+        const y = Number(ymd[1]);
+        const m = Number(ymd[2]);
+        const d = Number(ymd[3]);
+        return new Date(y, m - 1, d, 12, 0, 0).getTime();
+      }
+      const parsed = Date.parse(str);
+      return isNaN(parsed) ? null : parsed;
     }
 
-    function renderMetric(num, den, cfg) {
-      showError('');
-      const title = (cfg && cfg.title) ? cfg.title : 'TỶ LỆ QUẢNG CÁO';
-      const decimals = Number.isFinite(Number(cfg?.decimals)) ? Number(cfg.decimals) : 2;
-      const color = cfg?.color || '#1f2329';
-      const showSub = cfg?.showSub !== undefined ? Boolean(cfg.showSub) : true;
-
-      uiTitle.textContent = title;
-      uiValue.style.color = color;
-
-      const ratio = den !== 0 ? (num / den) * 100 : 0;
-      uiValue.textContent = ratio.toLocaleString('vi-VN', {
+    function formatVN(num, decimals = 0) {
+      return Number(num || 0).toLocaleString('vi-VN', {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals
-      }) + '%';
-
-      if (showSub) {
-        uiSub.style.display = 'block';
-        const fmtNum = Math.round(num).toLocaleString('vi-VN');
-        const fmtDen = Math.round(den).toLocaleString('vi-VN');
-        uiSub.textContent = `Ads: ${fmtNum} / DT: ${fmtDen}`;
-      } else {
-        uiSub.style.display = 'none';
-      }
-
-      if (activeDashboard && typeof activeDashboard.setRendered === 'function') {
-        activeDashboard.setRendered();
-      } else if (bitableSdk.dashboard && typeof bitableSdk.dashboard.setRendered === 'function') {
-        bitableSdk.dashboard.setRendered();
-      }
+      });
     }
 
-    /**
-     * Tải danh sách Base khi chạy trong Bitable App (TAV - MASTER ONE)
-     */
-    async function loadBasesIfNeeded() {
-      try {
-        const env = await (bridgeSdk || bitableSdk.bridge).getEnv();
-        isMultipleBase = Boolean(env && env.needChangeBase);
-      } catch (e) {
-        isMultipleBase = false;
-      }
-
-      let baseList = [];
-      if (workspace && typeof workspace.getBaseList === 'function') {
-        try {
-          const res = await workspace.getBaseList({ query: '', page: { cursor: '' } });
-          if (res && Array.isArray(res.base_list) && res.base_list.length > 0) {
-            baseList = res.base_list;
-            isMultipleBase = true;
-          }
-        } catch (e) {
-          // Không phải môi trường multi-base workspace
-        }
-      }
-
-      if (isMultipleBase && baseList.length > 0) {
-        grpBase.style.display = 'flex';
-        selBase.innerHTML = '';
-        let preferredToken = '';
-
-        for (const b of baseList) {
-          const opt = document.createElement('option');
-          opt.value = b.token;
-          opt.textContent = b.name;
-          selBase.appendChild(opt);
-          if (/tav|master\s*one/i.test(b.name)) {
-            preferredToken = b.token;
-          }
-        }
-
-        const validTokens = new Set(baseList.map(b => b.token));
-        if (!currentConfig.baseToken || !validTokens.has(currentConfig.baseToken)) {
-          currentConfig.baseToken = preferredToken || baseList[0].token;
-        }
-        selBase.value = currentConfig.baseToken;
-        await switchBaseContext(currentConfig.baseToken);
-      } else {
-        grpBase.style.display = 'none';
-        if (currentConfig.baseToken) {
-          await switchBaseContext(currentConfig.baseToken);
-        }
-      }
+    function formatComma(num) {
+      return Math.round(Number(num || 0)).toLocaleString('en-US');
     }
 
-    async function loadTables() {
-      const tableList = await activeBase.getTableList();
-      selTable.innerHTML = '';
-      let preferredId = '';
+    // Trạng thái bộ lọc tương tác hiện tại
+    let filterState = {
+      shop: 'ALL',
+      datePreset: 'last_30_days',
+      month: 'ALL',
+      startDate: '',
+      endDate: ''
+    };
 
-      for (const t of tableList) {
-        const name = await t.getName();
-        const opt = document.createElement('option');
-        opt.value = t.id;
-        opt.textContent = name;
-        selTable.appendChild(opt);
-        if (/tracking\s*all/i.test(name)) {
-          preferredId = t.id;
-        }
+    // Bộ đệm bản ghi từ bảng TRACKING ALL
+    let cachedRecordsTableKey = '';
+    let cachedRows = [];
+    let cachedShops = [];
+    let cachedMonths = [];
+
+    function getDateBounds(preset, startStr, endStr) {
+      if (!preset || preset === 'ALL') return null;
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0).getTime();
+      const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).getTime();
+      const DAY = 86400000;
+
+      if (preset === 'today') {
+        return { min: todayStart, max: todayEnd };
       }
-
-      const validTableIds = new Set(tableList.map(t => t.id));
-      if (!currentConfig.tableId || !validTableIds.has(currentConfig.tableId)) {
-        currentConfig.tableId = preferredId || (tableList[0] ? tableList[0].id : '');
+      if (preset === 'yesterday') {
+        return { min: todayStart - DAY, max: todayStart - 1 };
       }
-      selTable.value = currentConfig.tableId;
-    }
-
-    async function loadFields(tableId) {
-      if (!tableId) return;
-
-      // 1. Lấy dataRange chuẩn từ getTableDataRange
-      try {
-        const ranges = await activeDashboard.getTableDataRange(tableId);
-        if (Array.isArray(ranges) && ranges.length > 0) {
-          const allRange = ranges.find(r => r.type === SourceType.ALL || r.type === 'ALL') || ranges[0];
-          const cleanRange = { ...allRange };
-          delete cleanRange.filterInfo;
-          activeDataRange = cleanRange;
-        }
-      } catch (e) {
-        activeDataRange = { type: (SourceType && SourceType.ALL) ? SourceType.ALL : 'ALL' };
+      if (preset === 'last_7_days') {
+        // Chuẩn Lark Base: Hôm nay + 6 ngày trước = 7 ngày
+        return { min: todayStart - 6 * DAY, max: todayEnd };
       }
-
-      // 2. Lấy danh sách trường hợp lệ của Dashboard từ getCategories + getFieldMetaList
-      let items = [];
-      try {
-        const cats = await activeDashboard.getCategories(tableId);
-        if (Array.isArray(cats) && cats.length > 0) {
-          items = cats.map(c => ({
-            id: c.fieldId,
-            name: c.fieldName,
-            type: c.fieldType
-          }));
-        }
-      } catch (e) {
-        console.warn('getCategories fallback:', e);
+      if (preset === 'last_30_days') {
+        // Chuẩn Lark Base ("trong 30 ngày qua"): Hôm nay + 29 ngày trước = 30 ngày
+        return { min: todayStart - 29 * DAY, max: todayEnd };
       }
-
-      if (items.length === 0) {
-        const table = await activeBase.getTableById(tableId);
-        const fieldMetaList = await table.getFieldMetaList();
-        items = fieldMetaList.map(f => ({
-          id: f.id,
-          name: f.name,
-          type: f.type
-        }));
+      if (preset === 'this_month') {
+        const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0).getTime();
+        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999).getTime();
+        return { min: start, max: end };
       }
-
-      selGroup.innerHTML = '';
-      selNum.innerHTML = '';
-      selDen.innerHTML = '';
-
-      let autoGroupId = '';
-      let autoNumId = '';
-      let autoDenId = '';
-
-      for (const f of items) {
-        const badge = getFieldTypeLabel(f.type);
-        const label = badge ? `${f.name} [${badge}]` : f.name;
-
-        const optG = document.createElement('option');
-        optG.value = f.id;
-        optG.textContent = label;
-        selGroup.appendChild(optG);
-
-        const optN = document.createElement('option');
-        optN.value = f.id;
-        optN.textContent = label;
-        selNum.appendChild(optN);
-
-        const optD = document.createElement('option');
-        optD.value = f.id;
-        optD.textContent = label;
-        selDen.appendChild(optD);
-
-        const norm = f.name.trim().toLowerCase();
-
-        if (!autoGroupId && (norm.includes('tên shop') || norm === 'shop')) {
-          autoGroupId = f.id;
-        }
-
-        if (!autoNumId && (norm.includes('chi phí ads') || norm.includes('chi phi ads'))) {
-          autoNumId = f.id;
-        }
-
-        if (!autoDenId && (norm.includes('doanh thu thuần') || norm.includes('doanh thu thuan'))) {
-          autoDenId = f.id;
-        }
+      if (preset === 'last_month') {
+        const start = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0).getTime();
+        const end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999).getTime();
+        return { min: start, max: end };
       }
-
-      const validIds = new Set(items.map(f => f.id));
-
-      if (!currentConfig.groupFieldId || !validIds.has(currentConfig.groupFieldId)) {
-        currentConfig.groupFieldId = autoGroupId || (items[0]?.id ?? '');
+      if (preset === 'custom') {
+        const min = startStr ? new Date(startStr + 'T00:00:00').getTime() : -Infinity;
+        const max = endStr ? new Date(endStr + 'T23:59:59.999').getTime() : Infinity;
+        return { min, max };
       }
-      if (!currentConfig.numFieldId || !validIds.has(currentConfig.numFieldId)) {
-        currentConfig.numFieldId = autoNumId || (items[0]?.id ?? '');
-      }
-      if (!currentConfig.denFieldId || !validIds.has(currentConfig.denFieldId)) {
-        currentConfig.denFieldId = autoDenId || (items[Math.min(1, items.length - 1)]?.id ?? '');
-      }
-
-      selGroup.value = currentConfig.groupFieldId;
-      selNum.value = currentConfig.numFieldId;
-      selDen.value = currentConfig.denFieldId;
-    }
-
-    async function autoDetectConfigIfNeeded() {
-      await loadBasesIfNeeded();
-      const tableList = await activeBase.getTableList();
-      let targetTable = tableList[0];
-      for (const t of tableList) {
-        const name = await t.getName();
-        if (/tracking\s*all/i.test(name)) {
-          targetTable = t;
-          break;
-        }
-      }
-      if (!targetTable) return;
-
-      currentConfig.tableId = targetTable.id;
-      const fields = await targetTable.getFieldMetaList();
-
-      let gId = fields[0]?.id || '';
-      let nId = fields[0]?.id || '';
-      let dId = fields[1]?.id || fields[0]?.id || '';
-
-      for (const f of fields) {
-        const norm = f.name.trim().toLowerCase();
-        if (norm.includes('tên shop') || norm === 'shop') gId = f.id;
-        if (norm.includes('chi phí ads') || norm.includes('chi phi ads')) nId = f.id;
-        if (norm.includes('doanh thu thuần') || norm.includes('doanh thu thuan')) dId = f.id;
-      }
-
-      currentConfig.groupFieldId = gId;
-      currentConfig.numFieldId = nId;
-      currentConfig.denFieldId = dId;
-    }
-
-    async function updatePreview() {
-      try {
-        if (isMultipleBase && selBase.value) {
-          currentConfig.baseToken = selBase.value;
-        }
-        currentConfig.tableId = selTable.value;
-        currentConfig.groupFieldId = selGroup.value;
-        currentConfig.numFieldId = selNum.value;
-        currentConfig.denFieldId = selDen.value;
-        currentConfig.title = inpTitle.value.trim() || 'TỶ LỆ QUẢNG CÁO';
-        currentConfig.decimals = parseInt(selDecimals.value, 10) || 2;
-        currentConfig.color = inpColor.value || '#1f2329';
-        currentConfig.showSub = chkSub.checked;
-
-        if (!currentConfig.tableId || !currentConfig.numFieldId || !currentConfig.denFieldId) return;
-
-        const condition = buildCondition(currentConfig);
-        const data = await activeDashboard.getPreviewData(condition);
-        const { num, den } = extractTotals(data, currentConfig);
-        renderMetric(num, den, currentConfig);
-      } catch (err) {
-        console.error('updatePreview error:', err);
-        showError('Lỗi xem trước: ' + (err.message || String(err)));
-      }
-    }
-
-    async function fetchAndRenderViewData() {
-      try {
-        const data = await activeDashboard.getData();
-        uiBadge.classList.remove('visible');
-        const { num, den } = extractTotals(data, currentConfig);
-        renderMetric(num, den, currentConfig);
-      } catch (err) {
-        console.warn('getData() fallback sang getPreviewData:', err);
-        try {
-          if (!currentConfig.tableId || !currentConfig.numFieldId || !currentConfig.denFieldId) {
-            await autoDetectConfigIfNeeded();
-          }
-          const condition = buildCondition(currentConfig);
-          const previewData = await activeDashboard.getPreviewData(condition);
-          uiBadge.classList.add('visible');
-          const { num, den } = extractTotals(previewData, currentConfig);
-          renderMetric(num, den, currentConfig);
-        } catch (fallbackErr) {
-          showError('Vui lòng bấm "..." góc phải khối -> Cấu hình -> Lưu vào Dashboard.');
-        }
-      }
-    }
-
-    function applySavedConfigObject(saved) {
-      if (!saved) return;
-      if (saved.customConfig) {
-        currentConfig = { ...currentConfig, ...saved.customConfig };
-      }
-      const dc = Array.isArray(saved.dataConditions) ? saved.dataConditions[0] : saved.dataConditions;
-      if (dc) {
-        if (dc.baseToken) currentConfig.baseToken = dc.baseToken;
-        if (dc.tableId) currentConfig.tableId = dc.tableId;
-        if (dc.dataRange) {
-          const cleanRange = { ...dc.dataRange };
-          delete cleanRange.filterInfo;
-          activeDataRange = cleanRange;
-        }
-        if (dc.groups?.[0]?.fieldId) currentConfig.groupFieldId = dc.groups[0].fieldId;
-        if (dc.series?.[0]?.fieldId) currentConfig.numFieldId = dc.series[0].fieldId;
-        if (dc.series?.[1]?.fieldId) currentConfig.denFieldId = dc.series[1].fieldId;
-      }
+      return null;
     }
 
     async function init() {
       try {
-        const state = bitableSdk.dashboard.state;
-        const isCreate = state === DashboardState.Create || state === 'Create';
-        const isConfig = state === DashboardState.Config || state === 'Config';
+        const sdk = await loadBitableSDK();
+        const bitable = sdk.bitable;
+        const workspace = sdk.workspace || bitable?.workspace;
+        let activeDashboard = sdk.dashboard || bitable?.dashboard;
+        let activeBase = sdk.base || bitable?.base;
+        let activeBaseToken = '';
 
-        if (!isCreate) {
+        const DashboardState = sdk.DashboardState || {
+          Create: 'Create',
+          Config: 'Config',
+          View: 'View',
+          FullScreen: 'FullScreen'
+        };
+        const Rollup = sdk.Rollup || { SUM: 'SUM' };
+        const SourceType = sdk.SourceType || { ALL: 'ALL' };
+        const GroupMode = sdk.GroupMode || { INTEGRATED: 'integrated' };
+        const ORDER = sdk.ORDER || { ASCENDING: 1 };
+        const DATA_SOURCE_SORT_TYPE = sdk.DATA_SOURCE_SORT_TYPE || { VALUE: 'VALUE' };
+
+        async function resolveBaseApp(preferredBaseToken = '') {
           try {
-            const saved = await bitableSdk.dashboard.getConfig();
-            applySavedConfigObject(saved);
+            const list = await activeBase.getTableMetaList();
+            if (Array.isArray(list) && list.length > 0) {
+              return { base: activeBase, baseToken: preferredBaseToken };
+            }
+          } catch (e) {}
+
+          if (workspace) {
+            try {
+              let token = preferredBaseToken;
+              if (!token && typeof workspace.getBaseList === 'function') {
+                const res = await workspace.getBaseList({});
+                const baseList = res?.base_list || res?.baseList || [];
+                if (baseList.length > 0) {
+                  token = baseList[0].token;
+                }
+              }
+              if (token && typeof workspace.getBitable === 'function') {
+                const bitableApp = await workspace.getBitable(token);
+                if (bitableApp?.base) {
+                  activeBase = bitableApp.base;
+                  activeBaseToken = token;
+                  if (bitableApp.dashboard) activeDashboard = bitableApp.dashboard;
+                  return { base: activeBase, baseToken: token };
+                }
+              }
+            } catch (e) {
+              console.warn('Workspace resolve warning:', e);
+            }
+          }
+          return { base: activeBase, baseToken: preferredBaseToken };
+        }
+
+        async function applyTheme() {
+          try {
+            if (activeDashboard.getTheme) {
+              const t = await activeDashboard.getTheme();
+              const mode = String(t?.theme || '').toUpperCase();
+              document.body.classList.toggle('dark', mode.includes('DARK'));
+            }
+          } catch (e) {}
+        }
+        await applyTheme();
+        if (activeDashboard.onThemeChange) {
+          activeDashboard.onThemeChange(() => applyTheme());
+        }
+
+        const state = activeDashboard.state;
+        const isConfigMode = (state === DashboardState.Create || state === DashboardState.Config);
+        document.body.classList.toggle('is-config', isConfigMode);
+
+        let currentConfig = {
+          baseToken: '',
+          tableId: '',
+          shopFieldId: '',
+          dateFieldId: '',
+          monthFieldId: '',
+          numFieldId: '',
+          denFieldId: '',
+          orderFieldId: '',
+          layoutMode: 'single',
+          defaultDatePreset: 'last_30_days',
+          showFilterBar: 'show',
+          title: 'TỶ LỆ QUẢNG CÁO',
+          precision: 2,
+          showSub: true
+        };
+
+        if (state !== DashboardState.Create) {
+          try {
+            const saved = await activeDashboard.getConfig();
+            if (saved) {
+              const cond0 = saved.dataConditions?.[0] || {};
+              const custom = saved.customConfig || {};
+              currentConfig.baseToken = cond0.baseToken || custom.baseToken || '';
+              currentConfig.tableId = cond0.tableId || custom.tableId || '';
+              currentConfig.shopFieldId = custom.shopFieldId || cond0.groups?.[0]?.fieldId || '';
+              currentConfig.dateFieldId = custom.dateFieldId || '';
+              currentConfig.monthFieldId = custom.monthFieldId || '';
+              currentConfig.numFieldId = cond0.series?.[0]?.fieldId || custom.numFieldId || '';
+              currentConfig.denFieldId = cond0.series?.[1]?.fieldId || custom.denFieldId || '';
+              currentConfig.orderFieldId = cond0.series?.[2]?.fieldId || custom.orderFieldId || '';
+              currentConfig.layoutMode = custom.layoutMode || 'single';
+              currentConfig.defaultDatePreset = custom.defaultDatePreset || 'last_30_days';
+              currentConfig.showFilterBar = custom.showFilterBar || 'show';
+              if (custom.title !== undefined) currentConfig.title = custom.title;
+              if (custom.precision !== undefined) currentConfig.precision = Number(custom.precision);
+              if (custom.showSub !== undefined) currentConfig.showSub = Boolean(custom.showSub);
+            }
           } catch (e) {
-            console.warn('Chưa có config đã lưu:', e);
+            console.warn('getConfig warning:', e);
           }
         }
 
-        if (isCreate || isConfig) {
-          appEl.classList.add('is-config');
-          uiBadge.classList.remove('visible');
+        filterState.datePreset = currentConfig.defaultDatePreset || 'last_30_days';
 
-          inpTitle.value = currentConfig.title || 'TỶ LỆ QUẢNG CÁO';
-          selDecimals.value = String(currentConfig.decimals ?? 2);
-          inpColor.value = currentConfig.color || '#1f2329';
-          chkSub.checked = currentConfig.showSub !== false;
+        await resolveBaseApp(currentConfig.baseToken);
+        if (activeBaseToken && !currentConfig.baseToken) {
+          currentConfig.baseToken = activeBaseToken;
+        }
 
-          await loadBasesIfNeeded();
-          await loadTables();
-          await loadFields(currentConfig.tableId);
-          await updatePreview();
+        function syncFilterControlsUI() {
+          miniShopSelect.value = filterState.shop;
+          miniDateSelect.value = filterState.datePreset;
+          miniMonthSelect.value = filterState.month;
+          fullDateSelect.value = filterState.datePreset;
+          fullMonthSelect.value = filterState.month;
 
-          selBase.addEventListener('change', async () => {
-            currentConfig.baseToken = selBase.value;
-            currentConfig.tableId = '';
-            currentConfig.groupFieldId = '';
-            currentConfig.numFieldId = '';
-            currentConfig.denFieldId = '';
-            await switchBaseContext(currentConfig.baseToken);
-            await loadTables();
-            await loadFields(currentConfig.tableId);
-            await updatePreview();
+          const isCustom = filterState.datePreset === 'custom';
+          miniCustomDateBox.classList.toggle('show', isCustom);
+          fullCustomDateBox.classList.toggle('show', isCustom);
+
+          const pills = shopPillsContainer.querySelectorAll('.shop-pill');
+          pills.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.shop === filterState.shop);
+          });
+        }
+
+        function populateFilterOptions(shops, months, hasMonthField) {
+          // Dropdown Shop (Chế độ 1)
+          const curShop = filterState.shop;
+          miniShopSelect.innerHTML = '<option value="ALL">Shop: Tất cả</option>';
+          shops.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s;
+            opt.textContent = s;
+            miniShopSelect.appendChild(opt);
+          });
+          miniShopSelect.value = shops.includes(curShop) ? curShop : 'ALL';
+
+          // Pills Shop (Chế độ 2)
+          shopPillsContainer.innerHTML = '';
+          const allBtn = document.createElement('button');
+          allBtn.className = 'shop-pill' + (filterState.shop === 'ALL' ? ' active' : '');
+          allBtn.dataset.shop = 'ALL';
+          allBtn.textContent = 'Tất cả';
+          allBtn.onclick = () => {
+            filterState.shop = 'ALL';
+            syncFilterControlsUI();
+            recalculateFromMemory();
+          };
+          shopPillsContainer.appendChild(allBtn);
+
+          shops.forEach(s => {
+            const btn = document.createElement('button');
+            btn.className = 'shop-pill' + (filterState.shop === s ? ' active' : '');
+            btn.dataset.shop = s;
+            btn.textContent = s;
+            btn.onclick = () => {
+              filterState.shop = s;
+              syncFilterControlsUI();
+              recalculateFromMemory();
+            };
+            shopPillsContainer.appendChild(btn);
           });
 
-          selTable.addEventListener('change', async () => {
-            currentConfig.tableId = selTable.value;
-            currentConfig.groupFieldId = '';
-            currentConfig.numFieldId = '';
-            currentConfig.denFieldId = '';
-            await loadFields(currentConfig.tableId);
-            await updatePreview();
+          // Dropdown Tháng
+          if (hasMonthField && months.length > 0) {
+            miniMonthSelect.style.display = '';
+            fullMonthGroup.style.display = 'flex';
+            miniMonthSelect.innerHTML = '<option value="ALL">Tháng: Tất cả</option>';
+            fullMonthSelect.innerHTML = '<option value="ALL">Chọn (Tất cả)</option>';
+            months.forEach(m => {
+              const o1 = document.createElement('option');
+              o1.value = m;
+              o1.textContent = m;
+              miniMonthSelect.appendChild(o1);
+
+              const o2 = document.createElement('option');
+              o2.value = m;
+              o2.textContent = m;
+              fullMonthSelect.appendChild(o2);
+            });
+          } else {
+            miniMonthSelect.style.display = 'none';
+            fullMonthGroup.style.display = 'none';
+          }
+
+          syncFilterControlsUI();
+        }
+
+        function renderTotals(sumNum, sumDen, sumOrders) {
+          clearError();
+          const isAllInOne = currentConfig.layoutMode === 'allinone';
+          mainArea.classList.toggle('mode-allinone', isAllInOne);
+          slicerBar.classList.toggle('hidden', currentConfig.showFilterBar === 'hide');
+
+          const ratio = sumDen !== 0 ? (sumNum / sumDen) * 100 : 0;
+          const formattedRatio = formatVN(ratio, currentConfig.precision) + '%';
+
+          // Chế độ 1: Thẻ đơn
+          uiTitle.textContent = currentConfig.title || 'TỶ LỆ QUẢNG CÁO';
+          uiValue.textContent = formattedRatio;
+          if (currentConfig.showSub) {
+            uiSub.style.display = 'block';
+            uiSub.textContent = `Ads: ${formatVN(sumNum, 0)} / DT: ${formatVN(sumDen, 0)}`;
+          } else {
+            uiSub.style.display = 'none';
+          }
+
+          // Chế độ 2: 4 Thẻ KPI All-in-One
+          kpiRev.textContent = formatComma(sumDen);
+          kpiAds.textContent = formatComma(sumNum);
+          kpiRatioLabel.textContent = currentConfig.title || 'TỶ LỆ QUẢNG CÁO';
+          kpiRatio.textContent = formattedRatio;
+          kpiRatioNote.textContent = `Ads: ${formatVN(sumNum, 0)} / DT: ${formatVN(sumDen, 0)}`;
+          kpiOrders.textContent = formatComma(sumOrders);
+        }
+
+        function recalculateFromMemory() {
+          if (!cachedRows || cachedRows.length === 0) return false;
+          const bounds = getDateBounds(filterState.datePreset, filterState.startDate, filterState.endDate);
+          let sumNum = 0;
+          let sumDen = 0;
+          let sumOrders = 0;
+
+          for (const row of cachedRows) {
+            if (filterState.shop !== 'ALL' && row.shop !== filterState.shop) continue;
+            if (filterState.month !== 'ALL' && row.month !== filterState.month) continue;
+            if (bounds && currentConfig.dateFieldId) {
+              if (row.dateMs === null || row.dateMs < bounds.min || row.dateMs > bounds.max) continue;
+            }
+            sumNum += row.num;
+            sumDen += row.den;
+            sumOrders += row.orders;
+          }
+
+          renderTotals(sumNum, sumDen, sumOrders);
+          return true;
+        }
+
+        async function fetchRecordsAndCalculate() {
+          if (!currentConfig.tableId || !currentConfig.numFieldId || !currentConfig.denFieldId) {
+            return;
+          }
+
+          const cacheKey = [
+            currentConfig.baseToken,
+            currentConfig.tableId,
+            currentConfig.shopFieldId,
+            currentConfig.dateFieldId,
+            currentConfig.monthFieldId,
+            currentConfig.numFieldId,
+            currentConfig.denFieldId,
+            currentConfig.orderFieldId
+          ].join('|');
+
+          if (cacheKey === cachedRecordsTableKey && cachedRows.length > 0) {
+            recalculateFromMemory();
+            return;
+          }
+
+          try {
+            await resolveBaseApp(currentConfig.baseToken);
+            const table = await activeBase.getTableById(currentConfig.tableId);
+            let allRecords = [];
+            let pageToken = undefined;
+            let hasMore = true;
+            let guard = 0;
+
+            while (hasMore && guard < 20) {
+              guard++;
+              const params = { pageSize: 5000 };
+              if (pageToken) params.pageToken = pageToken;
+              const res = await table.getRecords(params);
+              if (res?.records?.length) {
+                allRecords = allRecords.concat(res.records);
+              }
+              hasMore = Boolean(res?.hasMore);
+              pageToken = res?.pageToken;
+              if (!pageToken) break;
+            }
+
+            if (allRecords.length > 0) {
+              const rows = [];
+              const shopSet = new Set();
+              const monthSet = new Set();
+
+              for (const rec of allRecords) {
+                const f = rec.fields || {};
+                const num = parseNumber(f[currentConfig.numFieldId]);
+                const den = parseNumber(f[currentConfig.denFieldId]);
+                const orders = currentConfig.orderFieldId ? parseNumber(f[currentConfig.orderFieldId]) : 0;
+                const shop = currentConfig.shopFieldId ? parseText(f[currentConfig.shopFieldId]) : '';
+                const dateMs = currentConfig.dateFieldId ? parseDateMs(f[currentConfig.dateFieldId]) : null;
+                let month = currentConfig.monthFieldId ? parseText(f[currentConfig.monthFieldId]) : '';
+                if (!month && dateMs !== null) {
+                  const d = new Date(dateMs);
+                  month = `Tháng ${d.getMonth() + 1} / ${d.getFullYear()}`;
+                }
+
+                if (shop) shopSet.add(shop);
+                if (month) monthSet.add(month);
+
+                rows.push({ num, den, orders, shop, dateMs, month });
+              }
+
+              cachedRecordsTableKey = cacheKey;
+              cachedRows = rows;
+              cachedShops = Array.from(shopSet).sort((a, b) => a.localeCompare(b, 'vi'));
+              cachedMonths = Array.from(monthSet);
+
+              populateFilterOptions(cachedShops, cachedMonths, Boolean(currentConfig.monthFieldId || currentConfig.dateFieldId));
+              recalculateFromMemory();
+
+              if (activeDashboard.setRendered) {
+                setTimeout(() => activeDashboard.setRendered(), 50);
+              }
+              return;
+            }
+          } catch (err) {
+            console.warn('getRecords fallback sang getPreviewData:', err);
+          }
+
+          // Fallback sang getPreviewData nếu getRecords bị giới hạn quyền
+          try {
+            const series = [
+              { fieldId: currentConfig.numFieldId, rollup: Rollup.SUM },
+              { fieldId: currentConfig.denFieldId, rollup: Rollup.SUM }
+            ];
+            if (currentConfig.orderFieldId) {
+              series.push({ fieldId: currentConfig.orderFieldId, rollup: Rollup.SUM });
+            }
+            const cond = {
+              tableId: currentConfig.tableId,
+              dataRange: { type: SourceType.ALL },
+              series
+            };
+            if (currentConfig.baseToken) cond.baseToken = currentConfig.baseToken;
+            if (currentConfig.shopFieldId) {
+              cond.groups = [{
+                fieldId: currentConfig.shopFieldId,
+                mode: GroupMode.INTEGRATED,
+                sort: { order: ORDER.ASCENDING, sortType: DATA_SOURCE_SORT_TYPE.VALUE }
+              }];
+            }
+            const matrix = await activeDashboard.getPreviewData(cond);
+            let sumNum = 0, sumDen = 0, sumOrders = 0;
+            if (Array.isArray(matrix) && matrix.length >= 2) {
+              for (let r = 1; r < matrix.length; r++) {
+                const row = matrix[r];
+                if (!Array.isArray(row)) continue;
+                sumNum += parseNumber(row[1]?.value ?? row[1]?.text);
+                sumDen += parseNumber(row[2]?.value ?? row[2]?.text);
+                if (row[3]) sumOrders += parseNumber(row[3]?.value ?? row[3]?.text);
+              }
+            }
+            renderTotals(sumNum, sumDen, sumOrders);
+            if (activeDashboard.setRendered) activeDashboard.setRendered();
+          } catch (e2) {
+            showError('Lỗi đọc dữ liệu: ' + (e2?.message || String(e2)));
+          }
+        }
+
+        // Sự kiện tương tác trên thanh Slicer
+        miniShopSelect.addEventListener('change', () => {
+          filterState.shop = miniShopSelect.value;
+          syncFilterControlsUI();
+          recalculateFromMemory();
+        });
+        miniDateSelect.addEventListener('change', () => {
+          filterState.datePreset = miniDateSelect.value;
+          syncFilterControlsUI();
+          recalculateFromMemory();
+        });
+        fullDateSelect.addEventListener('change', () => {
+          filterState.datePreset = fullDateSelect.value;
+          syncFilterControlsUI();
+          recalculateFromMemory();
+        });
+        miniMonthSelect.addEventListener('change', () => {
+          filterState.month = miniMonthSelect.value;
+          syncFilterControlsUI();
+          recalculateFromMemory();
+        });
+        fullMonthSelect.addEventListener('change', () => {
+          filterState.month = fullMonthSelect.value;
+          syncFilterControlsUI();
+          recalculateFromMemory();
+        });
+        [miniStartDate, miniEndDate, fullStartDate, fullEndDate].forEach(inp => {
+          inp.addEventListener('change', () => {
+            filterState.startDate = miniStartDate.value || fullStartDate.value;
+            filterState.endDate = miniEndDate.value || fullEndDate.value;
+            recalculateFromMemory();
+          });
+        });
+
+        // Khởi tạo Panel cấu hình khi ở chế độ Create / Config
+        if (isConfigMode) {
+          const tables = await activeBase.getTableMetaList();
+          tableSelect.innerHTML = '';
+          tables.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = t.name;
+            tableSelect.appendChild(opt);
           });
 
-          selGroup.addEventListener('change', updatePreview);
-          selNum.addEventListener('change', updatePreview);
-          selDen.addEventListener('change', updatePreview);
-          inpTitle.addEventListener('input', updatePreview);
-          selDecimals.addEventListener('change', updatePreview);
-          inpColor.addEventListener('input', updatePreview);
-          chkSub.addEventListener('change', updatePreview);
+          if (!currentConfig.tableId && tables.length > 0) {
+            const tracking = tables.find(t => t.name.toUpperCase().includes('TRACKING'));
+            currentConfig.tableId = tracking ? tracking.id : tables[0].id;
+          }
+          tableSelect.value = currentConfig.tableId;
 
-          btnSave.addEventListener('click', async () => {
-            btnSave.disabled = true;
-            btnSave.textContent = 'Đang lưu...';
+          layoutModeSelect.value = currentConfig.layoutMode;
+          defaultDatePresetSelect.value = currentConfig.defaultDatePreset;
+          showFilterBarSelect.value = currentConfig.showFilterBar;
+          titleInput.value = currentConfig.title;
+          precisionSelect.value = String(currentConfig.precision);
+          showSubCheck.checked = currentConfig.showSub;
+
+          async function loadFieldsForTable(tableId) {
+            let fields = [];
             try {
-              const condition = buildCondition(currentConfig);
+              const table = await activeBase.getTableById(tableId);
+              fields = await table.getFieldMetaList();
+            } catch (err) {
+              const cats = await activeDashboard.getCategories(tableId);
+              fields = cats.map(c => ({ id: c.fieldId, name: c.fieldName, type: c.fieldType }));
+            }
+
+            const fillSelect = (sel, allowEmptyText = '') => {
+              sel.innerHTML = '';
+              if (allowEmptyText) {
+                const emptyOpt = document.createElement('option');
+                emptyOpt.value = '';
+                emptyOpt.textContent = allowEmptyText;
+                sel.appendChild(emptyOpt);
+              }
+              fields.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f.id;
+                opt.textContent = f.name;
+                sel.appendChild(opt);
+              });
+            };
+
+            fillSelect(shopFieldSelect, '-- Không lọc Shop --');
+            fillSelect(dateFieldSelect, '-- Không lọc Ngày --');
+            fillSelect(monthFieldSelect, '-- Tự động theo Ngày --');
+            fillSelect(numFieldSelect);
+            fillSelect(denFieldSelect);
+            fillSelect(orderFieldSelect, '-- Không dùng --');
+
+            if (!currentConfig.shopFieldId) {
+              const shopF = fields.find(f => /TÊN SHOP|^SHOP$/i.test(f.name.trim())) || fields[0];
+              if (shopF) currentConfig.shopFieldId = shopF.id;
+            }
+            if (!currentConfig.dateFieldId) {
+              const dateF = fields.find(f => f.type === 5 || /^NGÀY$|THỜI GIAN NGÀY|DATE/i.test(f.name.trim()));
+              if (dateF) currentConfig.dateFieldId = dateF.id;
+            }
+            if (!currentConfig.monthFieldId) {
+              const monthF = fields.find(f => /THÁNG|^THỜI GIAN$/i.test(f.name.trim()) && f.id !== currentConfig.dateFieldId);
+              if (monthF) currentConfig.monthFieldId = monthF.id;
+            }
+            if (!currentConfig.numFieldId) {
+              const adsF = fields.find(f => /CHI PHÍ ADS|CHI PHÍ QUẢNG CÁO/i.test(f.name));
+              if (adsF) currentConfig.numFieldId = adsF.id;
+              else if (fields[0]) currentConfig.numFieldId = fields[0].id;
+            }
+            if (!currentConfig.denFieldId) {
+              const revF = fields.find(f => /DOANH THU THUẦN|DOANH THU/i.test(f.name));
+              if (revF) currentConfig.denFieldId = revF.id;
+              else if (fields[1]) currentConfig.denFieldId = fields[1].id;
+            }
+            if (!currentConfig.orderFieldId) {
+              const ordF = fields.find(f => /^SỐ ĐƠN$|ĐƠN HÀNG/i.test(f.name.trim()));
+              if (ordF) currentConfig.orderFieldId = ordF.id;
+            }
+
+            shopFieldSelect.value = currentConfig.shopFieldId;
+            dateFieldSelect.value = currentConfig.dateFieldId;
+            monthFieldSelect.value = currentConfig.monthFieldId;
+            numFieldSelect.value = currentConfig.numFieldId;
+            denFieldSelect.value = currentConfig.denFieldId;
+            orderFieldSelect.value = currentConfig.orderFieldId;
+
+            await fetchRecordsAndCalculate();
+          }
+
+          await loadFieldsForTable(currentConfig.tableId);
+
+          tableSelect.addEventListener('change', async () => {
+            currentConfig.tableId = tableSelect.value;
+            currentConfig.shopFieldId = '';
+            currentConfig.dateFieldId = '';
+            currentConfig.monthFieldId = '';
+            currentConfig.numFieldId = '';
+            currentConfig.denFieldId = '';
+            currentConfig.orderFieldId = '';
+            cachedRecordsTableKey = '';
+            await loadFieldsForTable(currentConfig.tableId);
+          });
+
+          const onConfigInputChanged = async () => {
+            currentConfig.layoutMode = layoutModeSelect.value;
+            currentConfig.shopFieldId = shopFieldSelect.value;
+            currentConfig.dateFieldId = dateFieldSelect.value;
+            currentConfig.monthFieldId = monthFieldSelect.value;
+            currentConfig.numFieldId = numFieldSelect.value;
+            currentConfig.denFieldId = denFieldSelect.value;
+            currentConfig.orderFieldId = orderFieldSelect.value;
+            currentConfig.defaultDatePreset = defaultDatePresetSelect.value;
+            currentConfig.showFilterBar = showFilterBarSelect.value;
+            currentConfig.title = titleInput.value;
+            currentConfig.precision = Number(precisionSelect.value);
+            currentConfig.showSub = showSubCheck.checked;
+
+            filterState.datePreset = currentConfig.defaultDatePreset;
+            syncFilterControlsUI();
+            await fetchRecordsAndCalculate();
+          };
+
+          [
+            layoutModeSelect,
+            shopFieldSelect,
+            dateFieldSelect,
+            monthFieldSelect,
+            numFieldSelect,
+            denFieldSelect,
+            orderFieldSelect,
+            defaultDatePresetSelect,
+            showFilterBarSelect,
+            precisionSelect,
+            showSubCheck
+          ].forEach(el => el.addEventListener('change', onConfigInputChanged));
+          titleInput.addEventListener('input', onConfigInputChanged);
+
+          saveBtn.addEventListener('click', async () => {
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Đang lưu...';
+            try {
+              const cond = {
+                tableId: currentConfig.tableId,
+                dataRange: { type: SourceType.ALL },
+                series: [
+                  { fieldId: currentConfig.numFieldId, rollup: Rollup.SUM },
+                  { fieldId: currentConfig.denFieldId, rollup: Rollup.SUM }
+                ]
+              };
+              if (currentConfig.baseToken) cond.baseToken = currentConfig.baseToken;
+              if (currentConfig.shopFieldId) {
+                cond.groups = [{
+                  fieldId: currentConfig.shopFieldId,
+                  mode: GroupMode.INTEGRATED,
+                  sort: { order: ORDER.ASCENDING, sortType: DATA_SOURCE_SORT_TYPE.VALUE }
+                }];
+              }
               await activeDashboard.saveConfig({
-                customConfig: { ...currentConfig },
-                dataConditions: [condition]
+                dataConditions: [cond],
+                customConfig: { ...currentConfig }
               });
             } catch (err) {
-              console.error('saveConfig error:', err);
-              showError('Lỗi khi lưu: ' + (err.message || String(err)));
-              btnSave.disabled = false;
-              btnSave.textContent = 'Lưu vào Dashboard';
+              showError('Lỗi khi lưu cấu hình: ' + (err?.message || String(err)));
+              saveBtn.disabled = false;
+              saveBtn.textContent = 'Lưu vào Dashboard';
             }
           });
         } else {
-          appEl.classList.remove('is-config');
-          if (currentConfig.baseToken) {
-            await switchBaseContext(currentConfig.baseToken);
-          } else {
-            await loadBasesIfNeeded();
-          }
-          await fetchAndRenderViewData();
+          // Chế độ View / FullScreen ngoài màn hình Dashboard
+          await fetchRecordsAndCalculate();
         }
 
-        // Lắng nghe sự kiện Slicer thay đổi trên cả activeDashboard và global dashboard
-        const handleDataChange = async (res) => {
-          const data = res?.data ?? res;
-          if (Array.isArray(data) && data.length >= 2) {
-            uiBadge.classList.remove('visible');
-            const { num, den } = extractTotals(data, currentConfig);
-            renderMetric(num, den, currentConfig);
-          } else {
-            await fetchAndRenderViewData();
-          }
-        };
-
-        activeDashboard.onDataChange(handleDataChange);
-        if (activeDashboard !== bitableSdk.dashboard) {
-          bitableSdk.dashboard.onDataChange(handleDataChange);
+        if (activeDashboard.onDataChange) {
+          activeDashboard.onDataChange(async () => {
+            cachedRecordsTableKey = '';
+            await fetchRecordsAndCalculate();
+          });
         }
-
-        const handleConfigChange = async (res) => {
-          const cfg = res?.data ?? res;
-          applySavedConfigObject(cfg);
-          if (currentConfig.baseToken) {
-            await switchBaseContext(currentConfig.baseToken);
-          }
-          await fetchAndRenderViewData();
-        };
-
-        activeDashboard.onConfigChange(handleConfigChange);
-        if (activeDashboard !== bitableSdk.dashboard) {
-          bitableSdk.dashboard.onConfigChange(handleConfigChange);
+        if (activeDashboard.onConfigChange) {
+          activeDashboard.onConfigChange(async () => {
+            cachedRecordsTableKey = '';
+            await fetchRecordsAndCalculate();
+          });
         }
       } catch (err) {
-        console.error('Init error:', err);
-        showError('Lỗi khởi tạo: ' + (err.message || String(err)));
+        showError('Lỗi khởi tạo: ' + (err?.message || String(err)));
       }
     }
 
