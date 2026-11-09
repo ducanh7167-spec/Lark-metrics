@@ -90,12 +90,12 @@
 
     /* Khu vực cấu hình bên phải (chỉ hiện ở chế độ Create / Config) */
     .config-pane {
-      width: 330px;
+      width: 340px;
       border-left: 1px solid var(--border-color);
-      padding: 16px;
+      padding: 14px 16px;
       display: none;
       flex-direction: column;
-      gap: 12px;
+      gap: 11px;
       overflow-y: auto;
       background: #fafbfc;
     }
@@ -112,7 +112,7 @@
     .form-group {
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 4px;
     }
     .form-group label {
       font-size: 12px;
@@ -192,9 +192,14 @@
       <div class="error-msg" id="ui-error" style="display:none;"></div>
     </div>
 
-    <!-- Bảng cấu hình (chỉ xuất hiện khi Thêm mới hoặc bấm Cấu hình) -->
+    <!-- Bảng cấu hình bên phải -->
     <div class="config-pane">
       <div class="config-header">Cấu hình Tỷ lệ Trọng số (ΣA / ΣB)</div>
+
+      <div class="form-group" id="grp-base" style="display:none;">
+        <label for="sel-base">0. Nguồn Base (Bitable App)</label>
+        <select id="sel-base" class="form-control"></select>
+      </div>
 
       <div class="form-group">
         <label for="sel-table">1. Bảng dữ liệu nguồn</label>
@@ -202,18 +207,18 @@
       </div>
 
       <div class="form-group">
-        <label for="sel-group">2. Trường phân nhóm (Bắt buộc để Slicer nhận diện)</label>
+        <label for="sel-group">2. Trường phân nhóm (Liên kết Slicer)</label>
         <select id="sel-group" class="form-control"></select>
-        <div class="form-hint">Chọn <b>TÊN SHOP</b> (hoặc cột phân loại bất kỳ) để Lark kích hoạt liên kết với mọi bộ lọc Slicer trên Dashboard.</div>
+        <div class="form-hint">Chọn <b>TÊN SHOP</b> để Lark đồng bộ với mọi bộ lọc Slicer trên Dashboard.</div>
       </div>
 
       <div class="form-group">
-        <label for="sel-num">3. Tử số — Tổng A (VD: CHI PHÍ ADS BAO GỒM VAT)</label>
+        <label for="sel-num">3. Tử số — Tổng A (Chi phí Ads)</label>
         <select id="sel-num" class="form-control"></select>
       </div>
 
       <div class="form-group">
-        <label for="sel-den">4. Mẫu số — Tổng B (VD: DOANH THU THUẦN)</label>
+        <label for="sel-den">4. Mẫu số — Tổng B (Doanh thu thuần)</label>
         <select id="sel-den" class="form-control"></select>
       </div>
 
@@ -255,7 +260,9 @@
     }
 
     const {
-      bitable,
+      bitable: bitableSdk,
+      bridge: bridgeSdk,
+      workspace,
       DashboardState,
       Rollup,
       SourceType,
@@ -264,9 +271,6 @@
       DATA_SOURCE_SORT_TYPE
     } = sdk;
 
-    const dashboard = bitable.dashboard;
-    const base = bitable.base;
-
     const appEl = document.getElementById('app');
     const uiTitle = document.getElementById('ui-title');
     const uiValue = document.getElementById('ui-value');
@@ -274,6 +278,8 @@
     const uiBadge = document.getElementById('ui-badge');
     const uiError = document.getElementById('ui-error');
 
+    const grpBase = document.getElementById('grp-base');
+    const selBase = document.getElementById('sel-base');
     const selTable = document.getElementById('sel-table');
     const selGroup = document.getElementById('sel-group');
     const selNum = document.getElementById('sel-num');
@@ -284,7 +290,14 @@
     const chkSub = document.getElementById('chk-sub');
     const btnSave = document.getElementById('btn-save');
 
+    let isMultipleBase = false;
+    let activeBitable = bitableSdk;
+    let activeDashboard = bitableSdk.dashboard;
+    let activeBase = bitableSdk.base;
+    let activeDataRange = { type: (SourceType && SourceType.ALL) ? SourceType.ALL : 'ALL' };
+
     let currentConfig = {
+      baseToken: '',
       tableId: '',
       groupFieldId: '',
       numFieldId: '',
@@ -319,24 +332,64 @@
       return Number.isFinite(parsed) ? parsed : 0;
     }
 
+    function getFieldTypeLabel(type) {
+      switch (type) {
+        case 2: return 'Số';
+        case 99003: return 'Tiền tệ';
+        case 20: return 'Công thức';
+        case 19: return 'Tra cứu';
+        case 1: return 'Văn bản';
+        case 3: return 'Chọn một';
+        case 4: return 'Chọn nhiều';
+        case 5: return 'Ngày';
+        default: return '';
+      }
+    }
+
     /**
-     * Xây dựng IDataCondition chuẩn theo kiến trúc Lark-Base-Team/indicator-card:
-     * BẮT BUỘC có `groups` hợp lệ để Lark Dashboard tạo `dataMeta` và cho phép Slicer liên kết.
+     * Khởi tạo ngữ cảnh Bitable App (workspace.getBitable) theo đúng baseToken
+     */
+    async function switchBaseContext(baseToken) {
+      if (baseToken && workspace && typeof workspace.getBitable === 'function') {
+        try {
+          const scoped = await workspace.getBitable(baseToken);
+          if (scoped) {
+            activeBitable = scoped;
+            activeDashboard = scoped.dashboard || bitableSdk.dashboard;
+            activeBase = scoped.base || bitableSdk.base;
+            return;
+          }
+        } catch (e) {
+          console.warn('workspace.getBitable fallback:', e);
+        }
+      }
+      activeBitable = bitableSdk;
+      activeDashboard = bitableSdk.dashboard;
+      activeBase = bitableSdk.base;
+    }
+
+    /**
+     * Xây dựng IDataCondition có đầy đủ baseToken + tableId + dataRange + groups + series
      */
     function buildCondition(cfg) {
       const isSameField = cfg.numFieldId === cfg.denFieldId;
+      const sumRollup = (Rollup && Rollup.SUM) ? Rollup.SUM : 'SUM';
       const series = isSameField
-        ? [{ fieldId: cfg.numFieldId, rollup: (Rollup && Rollup.SUM) ? Rollup.SUM : 'SUM' }]
+        ? [{ fieldId: cfg.numFieldId, rollup: sumRollup }]
         : [
-            { fieldId: cfg.numFieldId, rollup: (Rollup && Rollup.SUM) ? Rollup.SUM : 'SUM' },
-            { fieldId: cfg.denFieldId, rollup: (Rollup && Rollup.SUM) ? Rollup.SUM : 'SUM' }
+            { fieldId: cfg.numFieldId, rollup: sumRollup },
+            { fieldId: cfg.denFieldId, rollup: sumRollup }
           ];
 
       const condition = {
         tableId: cfg.tableId,
-        dataRange: { type: (SourceType && SourceType.ALL) ? SourceType.ALL : 'ALL' },
+        dataRange: activeDataRange || { type: (SourceType && SourceType.ALL) ? SourceType.ALL : 'ALL' },
         series
       };
+
+      if (cfg.baseToken) {
+        condition.baseToken = cfg.baseToken;
+      }
 
       if (cfg.groupFieldId) {
         condition.groups = [
@@ -354,10 +407,6 @@
       return condition;
     }
 
-    /**
-     * Cộng tổng Tử số và Mẫu số trên toàn bộ các dòng trả về từ Lark Dashboard
-     * (Hỗ trợ cả bảng đã phân nhóm theo `groups` lẫn bảng không phân nhóm)
-     */
     function extractTotals(data, cfg) {
       if (!Array.isArray(data) || data.length < 2) {
         return { num: 0, den: 0 };
@@ -369,19 +418,16 @@
       let totalNum = 0;
       let totalDen = 0;
 
-      // Dòng 0 là Header, dữ liệu bắt đầu từ dòng 1 (giống hệt data.slice(1) trong indicator-card)
       for (let r = 1; r < data.length; r++) {
         const row = data[r];
         if (!Array.isArray(row) || row.length === 0) continue;
 
         if (hasGroup && row.length >= 2) {
-          // row[0] = Group (VD: Tên Shop), row[1] = Series 0 (Tử số), row[2] = Series 1 (Mẫu số)
           const numVal = toNumber(row[1]?.value);
           const denVal = isSameField ? numVal : toNumber(row[2]?.value);
           totalNum += numVal;
           totalDen += denVal;
         } else {
-          // Trường hợp không có cột group: row[0] = Tử số, row[1] = Mẫu số
           const numVal = toNumber(row[0]?.value);
           const denVal = (isSameField || row.length < 2) ? numVal : toNumber(row[1]?.value);
           totalNum += numVal;
@@ -417,13 +463,68 @@
         uiSub.style.display = 'none';
       }
 
-      if (dashboard && typeof dashboard.setRendered === 'function') {
-        dashboard.setRendered();
+      if (activeDashboard && typeof activeDashboard.setRendered === 'function') {
+        activeDashboard.setRendered();
+      } else if (bitableSdk.dashboard && typeof bitableSdk.dashboard.setRendered === 'function') {
+        bitableSdk.dashboard.setRendered();
+      }
+    }
+
+    /**
+     * Tải danh sách Base khi chạy trong Bitable App (TAV - MASTER ONE)
+     */
+    async function loadBasesIfNeeded() {
+      try {
+        const env = await (bridgeSdk || bitableSdk.bridge).getEnv();
+        isMultipleBase = Boolean(env && env.needChangeBase);
+      } catch (e) {
+        isMultipleBase = false;
+      }
+
+      let baseList = [];
+      if (workspace && typeof workspace.getBaseList === 'function') {
+        try {
+          const res = await workspace.getBaseList({ query: '', page: { cursor: '' } });
+          if (res && Array.isArray(res.base_list) && res.base_list.length > 0) {
+            baseList = res.base_list;
+            isMultipleBase = true;
+          }
+        } catch (e) {
+          // Không phải môi trường multi-base workspace
+        }
+      }
+
+      if (isMultipleBase && baseList.length > 0) {
+        grpBase.style.display = 'flex';
+        selBase.innerHTML = '';
+        let preferredToken = '';
+
+        for (const b of baseList) {
+          const opt = document.createElement('option');
+          opt.value = b.token;
+          opt.textContent = b.name;
+          selBase.appendChild(opt);
+          if (/tav|master\s*one/i.test(b.name)) {
+            preferredToken = b.token;
+          }
+        }
+
+        const validTokens = new Set(baseList.map(b => b.token));
+        if (!currentConfig.baseToken || !validTokens.has(currentConfig.baseToken)) {
+          currentConfig.baseToken = preferredToken || baseList[0].token;
+        }
+        selBase.value = currentConfig.baseToken;
+        await switchBaseContext(currentConfig.baseToken);
+      } else {
+        grpBase.style.display = 'none';
+        if (currentConfig.baseToken) {
+          await switchBaseContext(currentConfig.baseToken);
+        }
       }
     }
 
     async function loadTables() {
-      const tableList = await base.getTableList();
+      const tableList = await activeBase.getTableList();
       selTable.innerHTML = '';
       let preferredId = '';
 
@@ -438,7 +539,8 @@
         }
       }
 
-      if (!currentConfig.tableId) {
+      const validTableIds = new Set(tableList.map(t => t.id));
+      if (!currentConfig.tableId || !validTableIds.has(currentConfig.tableId)) {
         currentConfig.tableId = preferredId || (tableList[0] ? tableList[0].id : '');
       }
       selTable.value = currentConfig.tableId;
@@ -446,8 +548,44 @@
 
     async function loadFields(tableId) {
       if (!tableId) return;
-      const table = await base.getTableById(tableId);
-      const fieldMetaList = await table.getFieldMetaList();
+
+      // 1. Lấy dataRange chuẩn từ getTableDataRange
+      try {
+        const ranges = await activeDashboard.getTableDataRange(tableId);
+        if (Array.isArray(ranges) && ranges.length > 0) {
+          const allRange = ranges.find(r => r.type === SourceType.ALL || r.type === 'ALL') || ranges[0];
+          const cleanRange = { ...allRange };
+          delete cleanRange.filterInfo;
+          activeDataRange = cleanRange;
+        }
+      } catch (e) {
+        activeDataRange = { type: (SourceType && SourceType.ALL) ? SourceType.ALL : 'ALL' };
+      }
+
+      // 2. Lấy danh sách trường hợp lệ của Dashboard từ getCategories + getFieldMetaList
+      let items = [];
+      try {
+        const cats = await activeDashboard.getCategories(tableId);
+        if (Array.isArray(cats) && cats.length > 0) {
+          items = cats.map(c => ({
+            id: c.fieldId,
+            name: c.fieldName,
+            type: c.fieldType
+          }));
+        }
+      } catch (e) {
+        console.warn('getCategories fallback:', e);
+      }
+
+      if (items.length === 0) {
+        const table = await activeBase.getTableById(tableId);
+        const fieldMetaList = await table.getFieldMetaList();
+        items = fieldMetaList.map(f => ({
+          id: f.id,
+          name: f.name,
+          type: f.type
+        }));
+      }
 
       selGroup.innerHTML = '';
       selNum.innerHTML = '';
@@ -457,54 +595,50 @@
       let autoNumId = '';
       let autoDenId = '';
 
-      for (const f of fieldMetaList) {
+      for (const f of items) {
+        const badge = getFieldTypeLabel(f.type);
+        const label = badge ? `${f.name} [${badge}]` : f.name;
+
         const optG = document.createElement('option');
         optG.value = f.id;
-        optG.textContent = f.name;
+        optG.textContent = label;
         selGroup.appendChild(optG);
 
         const optN = document.createElement('option');
         optN.value = f.id;
-        optN.textContent = f.name;
+        optN.textContent = label;
         selNum.appendChild(optN);
 
         const optD = document.createElement('option');
         optD.value = f.id;
-        optD.textContent = f.name;
+        optD.textContent = label;
         selDen.appendChild(optD);
 
         const norm = f.name.trim().toLowerCase();
 
-        // Tự động nhận diện cột phân nhóm: ưu tiên "TÊN SHOP" / "SHOP"
         if (!autoGroupId && (norm.includes('tên shop') || norm === 'shop')) {
           autoGroupId = f.id;
         }
 
-        // Tự động nhận diện Tử số: ưu tiên "CHI PHÍ ADS BAO GỒM VAT" / "CHI PHÍ"
-        if (norm.includes('chi phí ads') || norm.includes('chi phi ads')) {
-          autoNumId = f.id;
-        } else if (!autoNumId && (norm.includes('chi phí') || norm.includes('chi phi'))) {
+        if (!autoNumId && (norm.includes('chi phí ads') || norm.includes('chi phi ads'))) {
           autoNumId = f.id;
         }
 
-        // Tự động nhận diện Mẫu số: ưu tiên "DOANH THU THUẦN"
-        if (norm.includes('doanh thu thuần') || norm.includes('doanh thu thuan')) {
-          autoDenId = f.id;
-        } else if (!autoDenId && (norm === 'nmv' || norm.includes('doanh thu'))) {
+        if (!autoDenId && (norm.includes('doanh thu thuần') || norm.includes('doanh thu thuan'))) {
           autoDenId = f.id;
         }
       }
 
-      const validIds = new Set(fieldMetaList.map(f => f.id));
+      const validIds = new Set(items.map(f => f.id));
 
       if (!currentConfig.groupFieldId || !validIds.has(currentConfig.groupFieldId)) {
-        currentConfig.groupFieldId = autoGroupId || (fieldMetaList[0]?.id ?? '');
+        currentConfig.groupFieldId = autoGroupId || (items[0]?.id ?? '');
       }
       if (!currentConfig.numFieldId || !validIds.has(currentConfig.numFieldId)) {
-        currentConfig.numFieldId = autoNumId || (fieldMetaList[0]?.id ?? '');
+        currentConfig.numFieldId = autoNumId || (items[0]?.id ?? '');
       }
       if (!currentConfig.denFieldId || !validIds.has(currentConfig.denFieldId)) {
-        currentConfig.denFieldId = autoDenId || (fieldMetaList[Math.min(1, fieldMetaList.length - 1)]?.id ?? '');
+        currentConfig.denFieldId = autoDenId || (items[Math.min(1, items.length - 1)]?.id ?? '');
       }
 
       selGroup.value = currentConfig.groupFieldId;
@@ -513,7 +647,8 @@
     }
 
     async function autoDetectConfigIfNeeded() {
-      const tableList = await base.getTableList();
+      await loadBasesIfNeeded();
+      const tableList = await activeBase.getTableList();
       let targetTable = tableList[0];
       for (const t of tableList) {
         const name = await t.getName();
@@ -545,6 +680,9 @@
 
     async function updatePreview() {
       try {
+        if (isMultipleBase && selBase.value) {
+          currentConfig.baseToken = selBase.value;
+        }
         currentConfig.tableId = selTable.value;
         currentConfig.groupFieldId = selGroup.value;
         currentConfig.numFieldId = selNum.value;
@@ -557,7 +695,7 @@
         if (!currentConfig.tableId || !currentConfig.numFieldId || !currentConfig.denFieldId) return;
 
         const condition = buildCondition(currentConfig);
-        const data = await dashboard.getPreviewData(condition);
+        const data = await activeDashboard.getPreviewData(condition);
         const { num, den } = extractTotals(data, currentConfig);
         renderMetric(num, den, currentConfig);
       } catch (err) {
@@ -568,20 +706,18 @@
 
     async function fetchAndRenderViewData() {
       try {
-        const data = await dashboard.getData();
+        const data = await activeDashboard.getData();
         uiBadge.classList.remove('visible');
         const { num, den } = extractTotals(data, currentConfig);
         renderMetric(num, den, currentConfig);
       } catch (err) {
-        console.warn('getData() chưa có dataMeta, chuyển sang chế độ Preview tạm thời:', err);
-        // Nếu khối chưa được bấm "Lưu vào Dashboard" lần đầu (lỗi no dataMeta),
-        // tự động dò bảng TRACKING ALL và hiển thị dữ liệu qua getPreviewData để không bị lỗi đỏ
+        console.warn('getData() fallback sang getPreviewData:', err);
         try {
           if (!currentConfig.tableId || !currentConfig.numFieldId || !currentConfig.denFieldId) {
             await autoDetectConfigIfNeeded();
           }
           const condition = buildCondition(currentConfig);
-          const previewData = await dashboard.getPreviewData(condition);
+          const previewData = await activeDashboard.getPreviewData(condition);
           uiBadge.classList.add('visible');
           const { num, den } = extractTotals(previewData, currentConfig);
           renderMetric(num, den, currentConfig);
@@ -591,25 +727,36 @@
       }
     }
 
+    function applySavedConfigObject(saved) {
+      if (!saved) return;
+      if (saved.customConfig) {
+        currentConfig = { ...currentConfig, ...saved.customConfig };
+      }
+      const dc = Array.isArray(saved.dataConditions) ? saved.dataConditions[0] : saved.dataConditions;
+      if (dc) {
+        if (dc.baseToken) currentConfig.baseToken = dc.baseToken;
+        if (dc.tableId) currentConfig.tableId = dc.tableId;
+        if (dc.dataRange) {
+          const cleanRange = { ...dc.dataRange };
+          delete cleanRange.filterInfo;
+          activeDataRange = cleanRange;
+        }
+        if (dc.groups?.[0]?.fieldId) currentConfig.groupFieldId = dc.groups[0].fieldId;
+        if (dc.series?.[0]?.fieldId) currentConfig.numFieldId = dc.series[0].fieldId;
+        if (dc.series?.[1]?.fieldId) currentConfig.denFieldId = dc.series[1].fieldId;
+      }
+    }
+
     async function init() {
       try {
-        const state = dashboard.state;
+        const state = bitableSdk.dashboard.state;
         const isCreate = state === DashboardState.Create || state === 'Create';
         const isConfig = state === DashboardState.Config || state === 'Config';
 
         if (!isCreate) {
           try {
-            const saved = await dashboard.getConfig();
-            if (saved && saved.customConfig) {
-              currentConfig = { ...currentConfig, ...saved.customConfig };
-            }
-            if (saved && Array.isArray(saved.dataConditions) && saved.dataConditions[0]) {
-              const dc = saved.dataConditions[0];
-              if (dc.tableId) currentConfig.tableId = dc.tableId;
-              if (dc.groups?.[0]?.fieldId) currentConfig.groupFieldId = dc.groups[0].fieldId;
-              if (dc.series?.[0]?.fieldId) currentConfig.numFieldId = dc.series[0].fieldId;
-              if (dc.series?.[1]?.fieldId) currentConfig.denFieldId = dc.series[1].fieldId;
-            }
+            const saved = await bitableSdk.dashboard.getConfig();
+            applySavedConfigObject(saved);
           } catch (e) {
             console.warn('Chưa có config đã lưu:', e);
           }
@@ -624,9 +771,22 @@
           inpColor.value = currentConfig.color || '#1f2329';
           chkSub.checked = currentConfig.showSub !== false;
 
+          await loadBasesIfNeeded();
           await loadTables();
           await loadFields(currentConfig.tableId);
           await updatePreview();
+
+          selBase.addEventListener('change', async () => {
+            currentConfig.baseToken = selBase.value;
+            currentConfig.tableId = '';
+            currentConfig.groupFieldId = '';
+            currentConfig.numFieldId = '';
+            currentConfig.denFieldId = '';
+            await switchBaseContext(currentConfig.baseToken);
+            await loadTables();
+            await loadFields(currentConfig.tableId);
+            await updatePreview();
+          });
 
           selTable.addEventListener('change', async () => {
             currentConfig.tableId = selTable.value;
@@ -650,7 +810,7 @@
             btnSave.textContent = 'Đang lưu...';
             try {
               const condition = buildCondition(currentConfig);
-              await dashboard.saveConfig({
+              await activeDashboard.saveConfig({
                 customConfig: { ...currentConfig },
                 dataConditions: [condition]
               });
@@ -663,11 +823,16 @@
           });
         } else {
           appEl.classList.remove('is-config');
+          if (currentConfig.baseToken) {
+            await switchBaseContext(currentConfig.baseToken);
+          } else {
+            await loadBasesIfNeeded();
+          }
           await fetchAndRenderViewData();
         }
 
-        // Tự động tính lại mỗi khi bất kỳ Slicer nào trên Dashboard thay đổi
-        dashboard.onDataChange(async (res) => {
+        // Lắng nghe sự kiện Slicer thay đổi trên cả activeDashboard và global dashboard
+        const handleDataChange = async (res) => {
           const data = res?.data ?? res;
           if (Array.isArray(data) && data.length >= 2) {
             uiBadge.classList.remove('visible');
@@ -676,15 +841,26 @@
           } else {
             await fetchAndRenderViewData();
           }
-        });
+        };
 
-        dashboard.onConfigChange(async (res) => {
+        activeDashboard.onDataChange(handleDataChange);
+        if (activeDashboard !== bitableSdk.dashboard) {
+          bitableSdk.dashboard.onDataChange(handleDataChange);
+        }
+
+        const handleConfigChange = async (res) => {
           const cfg = res?.data ?? res;
-          if (cfg?.customConfig) {
-            currentConfig = { ...currentConfig, ...cfg.customConfig };
+          applySavedConfigObject(cfg);
+          if (currentConfig.baseToken) {
+            await switchBaseContext(currentConfig.baseToken);
           }
           await fetchAndRenderViewData();
-        });
+        };
+
+        activeDashboard.onConfigChange(handleConfigChange);
+        if (activeDashboard !== bitableSdk.dashboard) {
+          bitableSdk.dashboard.onConfigChange(handleConfigChange);
+        }
       } catch (err) {
         console.error('Init error:', err);
         showError('Lỗi khởi tạo: ' + (err.message || String(err)));
