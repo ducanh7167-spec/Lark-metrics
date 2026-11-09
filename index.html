@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tỷ lệ Quảng cáo - TAV Dashboard</title>
+  <title>Lark Base Weighted Metric - Tỷ lệ Quảng cáo</title>
   <style>
     :root {
       --bg-color: #ffffff;
@@ -12,8 +12,9 @@
       --text-muted: #8f959e;
       --border-color: #dee0e3;
       --accent-color: #3370ff;
+      --accent-hover: #245bdb;
+      --danger-color: #f54a45;
       --panel-bg: #f8f9fa;
-      --card-bg: #ffffff;
     }
 
     body[data-theme="dark"] {
@@ -22,8 +23,7 @@
       --text-secondary: #a6a6a6;
       --text-muted: #757575;
       --border-color: #303030;
-      --panel-bg: #222222;
-      --card-bg: #2a2a2a;
+      --panel-bg: #242424;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -31,7 +31,7 @@
     html, body {
       width: 100%;
       height: 100%;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       background-color: var(--bg-color);
       color: var(--text-primary);
       overflow: hidden;
@@ -49,7 +49,7 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding: 16px 20px;
+      padding: 14px 18px;
       min-width: 0;
     }
 
@@ -57,9 +57,7 @@
       font-size: 13px;
       font-weight: 600;
       color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -71,10 +69,20 @@
       color: var(--text-primary);
       line-height: 1.15;
       font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .metric-value.err {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--danger-color);
+      white-space: normal;
     }
 
     .metric-sub {
-      font-size: 12px;
+      font-size: 11.5px;
       color: var(--text-muted);
       margin-top: 6px;
       font-variant-numeric: tabular-nums;
@@ -83,66 +91,71 @@
       text-overflow: ellipsis;
     }
 
-    /* PANEL XÁC NHẬN 1-CLICK (KHÔNG CẦN CHỌN TRƯỜNG TRONG BẢNG) */
+    /* PANEL CHỌN NGUỒN (CHỈ HIỆN Ở TRẠNG THÁI CREATE / CONFIG) */
     .config-panel {
-      width: 330px;
+      width: 320px;
       border-left: 1px solid var(--border-color);
       background-color: var(--panel-bg);
       padding: 16px;
       display: none;
       flex-direction: column;
       gap: 12px;
-      justify-content: center;
+      overflow-y: auto;
     }
 
     .app-container.is-config .config-panel {
       display: flex;
     }
 
-    .config-header {
+    .config-title {
       font-size: 14px;
       font-weight: 600;
+      color: var(--text-primary);
       padding-bottom: 8px;
       border-bottom: 1px solid var(--border-color);
     }
 
-    .preset-list {
+    .form-group {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 4px;
     }
 
-    .preset-item {
-      background: var(--card-bg);
-      border: 1.5px solid var(--border-color);
-      border-radius: 8px;
-      padding: 10px 12px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .preset-item.active {
-      border-color: var(--accent-color);
-      background: rgba(51, 112, 255, 0.06);
-    }
-
-    .preset-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin-bottom: 3px;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .preset-desc {
-      font-size: 11px;
+    .form-group label {
+      font-size: 12px;
+      font-weight: 600;
       color: var(--text-secondary);
     }
 
+    .form-group select,
+    .form-group input {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 13px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      outline: none;
+    }
+
+    .form-group select:focus,
+    .form-group input:focus {
+      border-color: var(--accent-color);
+    }
+
+    .hint-box {
+      font-size: 11.5px;
+      line-height: 1.45;
+      color: var(--text-secondary);
+      background: rgba(51, 112, 255, 0.08);
+      border-radius: 6px;
+      padding: 8px 10px;
+    }
+
     .btn-save {
-      margin-top: 8px;
-      padding: 11px;
+      margin-top: auto;
+      padding: 10px 14px;
       font-size: 13px;
       font-weight: 600;
       color: #ffffff;
@@ -152,297 +165,379 @@
       cursor: pointer;
     }
 
-    .btn-save:hover { opacity: 0.92; }
-    .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-save:hover { background-color: var(--accent-hover); }
+    .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
   </style>
 </head>
 <body>
   <div class="app-container" id="app-container">
-    <!-- Thẻ Metric -->
+    <!-- Khối hiển thị Thẻ Metric -->
     <div class="metric-card">
       <div class="metric-label" id="metric-label">TỶ LỆ QUẢNG CÁO</div>
-      <div class="metric-value" id="metric-val">Đang tính...</div>
+      <div class="metric-value" id="metric-val">Đang tải...</div>
       <div class="metric-sub" id="metric-sub"></div>
     </div>
 
-    <!-- Bảng chọn sẵn theo Khối Dashboard (Không cần chọn trường) -->
+    <!-- Khối chọn Nguồn dữ liệu (Chỉ hiện khi Thêm mới hoặc bấm Cấu hình) -->
     <div class="config-panel">
-      <div class="config-header">Chọn công thức Khối Dashboard</div>
-      <div class="preset-list" id="preset-list"></div>
-      <button class="btn-save" id="btn-save">Xác nhận & Lưu vào Dashboard</button>
+      <div class="config-title">Cấu hình Nguồn & Công thức (∑A / ∑B)</div>
+
+      <div class="form-group">
+        <label for="cfg-table">1. Bảng dữ liệu nguồn</label>
+        <select id="cfg-table"></select>
+      </div>
+
+      <div class="form-group">
+        <label for="cfg-range">2. Phạm vi dữ liệu</label>
+        <select id="cfg-range"></select>
+      </div>
+
+      <div class="form-group">
+        <label for="cfg-num">3. Cột Tử số (∑ Chi phí Quảng cáo)</label>
+        <select id="cfg-num"></select>
+      </div>
+
+      <div class="form-group">
+        <label for="cfg-den">4. Cột Mẫu số (∑ Doanh thu thuần)</label>
+        <select id="cfg-den"></select>
+      </div>
+
+      <div class="form-group">
+        <label for="cfg-title">5. Tiêu đề thẻ</label>
+        <input type="text" id="cfg-title" value="TỶ LỆ QUẢNG CÁO" />
+      </div>
+
+      <div class="hint-box">
+        💡 Sau khi bấm <b>Lưu cấu hình</b>, đừng quên kiểm tra các bộ lọc Slicer (<b>SHOP</b>, <b>THỜI GIAN</b>) trên Dashboard đã tick chọn áp dụng cho khối này nhé!
+      </div>
+
+      <button class="btn-save" id="btn-save">Xác nhận & Lưu cấu hình</button>
     </div>
   </div>
 
   <script type="module">
-    async function loadSDK() {
+    async function loadBitableSDK() {
       for (const url of [
         'https://cdn.jsdelivr.net/npm/@lark-base-open/js-sdk@1.0.2/+esm',
         'https://esm.sh/@lark-base-open/js-sdk@1.0.2'
       ]) {
         try { return await import(url); } catch (_) {}
       }
-      throw new Error('Không tải được Lark SDK');
+      throw new Error('Không thể tải @lark-base-open/js-sdk từ CDN.');
     }
 
     const appEl = document.getElementById('app-container');
     const labelEl = document.getElementById('metric-label');
     const valEl = document.getElementById('metric-val');
     const subEl = document.getElementById('metric-sub');
-    const presetListEl = document.getElementById('preset-list');
-    const btnSave = document.getElementById('btn-save');
 
-    const fmtNum = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 });
-    const fmtPct = new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const tableSelect = document.getElementById('cfg-table');
+    const rangeSelect = document.getElementById('cfg-range');
+    const numSelect = document.getElementById('cfg-num');
+    const denSelect = document.getElementById('cfg-den');
+    const titleInput = document.getElementById('cfg-title');
+    const saveBtn = document.getElementById('btn-save');
+
+    const vnNumFmt = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 });
+    const vnPctFmt = new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const norm = (s) => String(s || '').normalize('NFC').trim().toUpperCase();
 
-    function renderCard(numVal, denVal, title) {
+    function renderMetric(adsVal, revVal, title) {
       if (title) labelEl.textContent = title;
-      const a = typeof numVal === 'number' ? numVal : (parseFloat(String(numVal ?? '0')) || 0);
-      const b = typeof denVal === 'number' ? denVal : (parseFloat(String(denVal ?? '0')) || 0);
-      const pct = b > 0 ? (a / b) * 100 : 0;
+      const a = typeof adsVal === 'number' ? adsVal : (parseFloat(String(adsVal ?? '0')) || 0);
+      const b = typeof revVal === 'number' ? revVal : (parseFloat(String(revVal ?? '0')) || 0);
+      const ratio = b > 0 ? (a / b) * 100 : 0;
 
-      valEl.textContent = `${fmtPct.format(pct)}%`;
-      subEl.textContent = `Ads: ${fmtNum.format(a)} / DT: ${fmtNum.format(b)}`;
+      valEl.className = 'metric-value';
+      valEl.textContent = `${vnPctFmt.format(ratio)}%`;
+      subEl.textContent = `Ads: ${vnNumFmt.format(a)} / DT: ${vnNumFmt.format(b)}`;
     }
 
-    // Tự động tìm đúng bảng chứa cột DOANH THU THUẦN & CHI PHÍ ADS BAO GỒM VAT
-    async function detectTAVBlocks(base, dashboard, SourceType) {
-      const tables = await base.getTableMetaList();
-      let chosenTableId = tables[0]?.id;
-      let chosenFields = [];
+    // Tạo IDataCondition chuẩn (TUYỆT ĐỐI KHÔNG CÓ groups: [] để không bị lỗi "Nguồn dữ liệu đã thay đổi")
+    function createCondition(tableId, dataRangeObj, numFieldId, denFieldId, Rollup, SourceType) {
+      const sumRollup = Rollup?.SUM || 'SUM';
+      const validRange = dataRangeObj || { type: SourceType?.ALL || 'ALL' };
+      return {
+        tableId,
+        dataRange: validRange,
+        series: [
+          { fieldId: numFieldId, rollup: sumRollup },
+          { fieldId: denFieldId, rollup: sumRollup }
+        ]
+      };
+    }
 
-      // Quét tìm bảng có chứa cột DOANH THU THUẦN hoặc CHI PHÍ ADS
-      for (const tMeta of tables) {
-        const t = await base.getTableById(tMeta.id);
-        const fList = await t.getFieldMetaList();
-        const hasRev = fList.some(f => norm(f.name).includes('DOANH THU THUẦN') || norm(f.name) === 'NMV');
-        const hasAds = fList.some(f => norm(f.name).includes('CHI PHÍ'));
-        if (hasRev && hasAds) {
-          chosenTableId = tMeta.id;
-          chosenFields = fList;
-          break;
-        }
-        if (chosenFields.length === 0) {
-          chosenTableId = tMeta.id;
-          chosenFields = fList;
-        }
-      }
-
-      // Khớp chính xác tên cột trong Base TAV - MASTER ONE (tuyệt đối không nhầm vào CVR ADS / CLICK)
+    // Tự động chọn đúng cột CHI PHÍ ADS BAO GỒM VAT và DOANH THU THUẦN trong bảng
+    function findBestDefaultFields(fields) {
       const adsField =
-        chosenFields.find(f => norm(f.name) === 'CHI PHÍ ADS BAO GỒM VAT') ||
-        chosenFields.find(f => norm(f.name).startsWith('CHI PHÍ ADS')) ||
-        chosenFields.find(f => norm(f.name).startsWith('CHI PHÍ QUẢNG CÁO')) ||
-        chosenFields.find(f => norm(f.name).includes('CHI PHÍ'));
+        fields.find(f => norm(f.name) === 'CHI PHÍ ADS BAO GỒM VAT') ||
+        fields.find(f => norm(f.name).startsWith('CHI PHÍ ADS')) ||
+        fields.find(f => norm(f.name).startsWith('CHI PHÍ QUẢNG CÁO')) ||
+        fields.find(f => norm(f.name).includes('CHI PHÍ')) ||
+        fields[0];
 
       const revField =
-        chosenFields.find(f => norm(f.name) === 'DOANH THU THUẦN') ||
-        chosenFields.find(f => norm(f.name).includes('DOANH THU THUẦN')) ||
-        chosenFields.find(f => norm(f.name) === 'NMV');
+        fields.find(f => norm(f.name) === 'DOANH THU THUẦN') ||
+        fields.find(f => norm(f.name).includes('DOANH THU THUẦN')) ||
+        fields.find(f => norm(f.name) === 'NMV') ||
+        fields.find(f => norm(f.name) === 'GMV') ||
+        fields.find(f => f.id !== adsField?.id) ||
+        fields[0];
 
-      const gmvField =
-        chosenFields.find(f => norm(f.name) === 'GMV') ||
-        chosenFields.find(f => norm(f.name).includes('GMV') && !norm(f.name).includes('ACOS'));
-
-      const cancelField =
-        chosenFields.find(f => norm(f.name).includes('DOANH SỐ HOÀN HỦY')) ||
-        chosenFields.find(f => norm(f.name) === 'HỦY');
-
-      const ranges = await dashboard.getTableDataRange(chosenTableId);
-      const allRange =
-        ranges.find(r => r.type === (SourceType?.ALL || 'ALL')) || { type: SourceType?.ALL || 'ALL' };
-
-      // Tạo danh sách các cặp Khối Dashboard dựng sẵn
-      const presets = [];
-      if (adsField && revField) {
-        presets.push({
-          id: 'ads_rev',
-          title: 'TỶ LỆ QUẢNG CÁO',
-          desc: `Khối CHI PHÍ QUẢNG CÁO ÷ Khối DOANH THU THUẦN`,
-          numFieldId: adsField.id,
-          denFieldId: revField.id
-        });
-      }
-      if (adsField && gmvField) {
-        presets.push({
-          id: 'ads_gmv',
-          title: 'TỶ LỆ ADS / GMV',
-          desc: `Khối CHI PHÍ QUẢNG CÁO ÷ Khối GMV`,
-          numFieldId: adsField.id,
-          denFieldId: gmvField.id
-        });
-      }
-      if (cancelField && gmvField) {
-        presets.push({
-          id: 'cancel_gmv',
-          title: 'TỶ LỆ HOÀN HỦY',
-          desc: `Khối DOANH SỐ HOÀN HỦY ÷ Khối GMV`,
-          numFieldId: cancelField.id,
-          denFieldId: gmvField.id
-        });
-      }
-
-      return { tableId: chosenTableId, dataRange: allRange, presets };
+      return {
+        adsFieldId: adsField?.id || '',
+        revFieldId: revField?.id || ''
+      };
     }
 
-    // Lấy giá trị tổng SUM của 2 khối an toàn tuyệt đối (không truyền groups: [])
-    async function fetchPairSum(dashboard, Rollup, tableId, dataRange, numFieldId, denFieldId) {
-      const sumRollup = Rollup?.SUM || 'SUM';
+    // Lọc bỏ các cột chữ/ngày tháng (như TÊN SHOP, NGÀY, THÁNG) để tránh chọn nhầm gây lỗi SUM
+    function filterValidNumericFields(fieldMetaList, FieldType) {
+      const numericTypes = new Set([
+        FieldType?.Number ?? 2,
+        FieldType?.Formula ?? 20,
+        FieldType?.Lookup ?? 19,
+        FieldType?.Currency ?? 99003,
+        FieldType?.Progress ?? 99002,
+        FieldType?.Rating ?? 99004
+      ]);
+      const filtered = fieldMetaList.filter(f => {
+        const n = norm(f.name);
+        if (n === 'TÊN SHOP' || n === 'SHOP' || n.startsWith('NGÀY') || n.startsWith('THÁNG')) {
+          return false;
+        }
+        return numericTypes.has(f.type);
+      });
+      return filtered.length >= 2 ? filtered : fieldMetaList;
+    }
+
+    async function main() {
       try {
-        // Gọi tách riêng từng khối để đảm bảo 100% không bao giờ bị trả về 0
-        const [resA, resB] = await Promise.all([
-          dashboard.getPreviewData({
-            tableId,
-            dataRange,
-            series: [{ fieldId: numFieldId, rollup: sumRollup }]
-          }),
-          dashboard.getPreviewData({
-            tableId,
-            dataRange,
-            series: [{ fieldId: denFieldId, rollup: sumRollup }]
-          })
-        ]);
-        return {
-          numVal: resA?.[1]?.[0]?.value ?? 0,
-          denVal: resB?.[1]?.[0]?.value ?? 0
-        };
-      } catch (e) {
-        console.error('Lỗi fetchPairSum:', e);
-        return { numVal: 0, denVal: 0 };
+        const sdk = await loadBitableSDK();
+        const { bitable, DashboardState, Rollup, SourceType, FieldType } = sdk;
+        const { dashboard, base } = bitable;
+
+        // Đồng bộ theme Sáng / Tối
+        try {
+          const initTheme = await dashboard.getTheme();
+          document.body.setAttribute('data-theme', (initTheme?.theme || '').toLowerCase() === 'dark' ? 'dark' : 'light');
+          dashboard.onThemeChange(ev => {
+            document.body.setAttribute('data-theme', (ev.data?.theme || '').toLowerCase() === 'dark' ? 'dark' : 'light');
+          });
+        } catch (_) {}
+
+        const state = dashboard.state;
+        const isConfigMode =
+          state === DashboardState.Create ||
+          state === DashboardState.Config ||
+          window.location.href.includes('isCreate=1') ||
+          window.location.href.includes('isConfig=1');
+
+        if (isConfigMode) {
+          appEl.classList.add('is-config');
+          await initConfigMode({ base, dashboard, DashboardState, Rollup, SourceType, FieldType });
+        } else {
+          appEl.classList.remove('is-config');
+          await initViewMode({ dashboard });
+        }
+      } catch (err) {
+        valEl.className = 'metric-value err';
+        valEl.textContent = 'Lỗi khởi tạo: ' + (err?.message || String(err));
       }
     }
 
-    async function init() {
-      const sdk = await loadSDK();
-      const { bitable, DashboardState, Rollup, SourceType } = sdk;
-      const { dashboard, base } = bitable;
+    // ================= CHẾ ĐỘ CẤU HÌNH (CREATE / CONFIG) =================
+    async function initConfigMode({ base, dashboard, DashboardState, Rollup, SourceType, FieldType }) {
+      const tableMetaList = await base.getTableMetaList();
+      tableSelect.innerHTML = tableMetaList
+        .map(t => `<option value="${t.id}">${t.name}</option>`)
+        .join('');
 
-      try {
-        const theme = await dashboard.getTheme();
-        document.body.setAttribute('data-theme', (theme?.theme || '').toLowerCase() === 'dark' ? 'dark' : 'light');
-        dashboard.onThemeChange(ev => {
-          document.body.setAttribute('data-theme', (ev.data?.theme || '').toLowerCase() === 'dark' ? 'dark' : 'light');
-        });
-      } catch (_) {}
+      // Ưu tiên bảng TRACKING ALL
+      const defaultTable =
+        tableMetaList.find(t => norm(t.name).includes('TRACKING ALL')) ||
+        tableMetaList.find(t => norm(t.name).includes('TRACKING')) ||
+        tableMetaList[0];
 
-      const isConfig =
-        dashboard.state === DashboardState.Create ||
-        dashboard.state === DashboardState.Config ||
-        location.href.includes('isCreate=1') ||
-        location.href.includes('isConfig=1');
+      let currentTableId = defaultTable?.id || '';
+      let currentRangeJson = '';
+      let currentNumId = '';
+      let currentDenId = '';
+      let currentTitle = 'TỶ LỆ QUẢNG CÁO';
 
-      // ================= 1. CHẾ ĐỘ HIỂN THỊ TRÊN DASHBOARD (VIEW) =================
-      if (!isConfig) {
-        const updateDashboardView = async (incomingData) => {
-          let title = 'TỶ LỆ QUẢNG CÁO';
-          let cfg = null;
-          try {
-            cfg = await dashboard.getConfig();
-            if (cfg?.customConfig?.title) title = cfg.customConfig.title;
-          } catch (_) {}
-
-          // Đọc dữ liệu đã lọc bởi Slicer trên Dashboard từ getData()
-          let data = incomingData;
-          if (!Array.isArray(data) || data.length < 2) {
-            try {
-              data = await dashboard.getData();
-            } catch (_) {}
+      // Nếu đang bấm sửa cấu hình đã lưu -> nạp lại cấu hình cũ (nếu hợp lệ)
+      if (dashboard.state === DashboardState.Config) {
+        try {
+          const saved = await dashboard.getConfig();
+          const cond = saved?.dataConditions?.[0];
+          if (cond?.tableId && tableMetaList.some(t => t.id === cond.tableId)) {
+            currentTableId = cond.tableId;
           }
-
-          if (Array.isArray(data?.[1]) && data[1].length >= 2) {
-            renderCard(data[1][0]?.value, data[1][1]?.value, title);
-          } else {
-            // Fallback an toàn nếu chỉ trả về 1 cột
-            const detected = await detectTAVBlocks(base, dashboard, SourceType);
-            const p0 = detected.presets[0];
-            if (p0) {
-              const { numVal, denVal } = await fetchPairSum(
-                dashboard,
-                Rollup,
-                detected.tableId,
-                detected.dataRange,
-                p0.numFieldId,
-                p0.denFieldId
-              );
-              renderCard(numVal, denVal, title);
+          if (cond?.dataRange) {
+            currentRangeJson = JSON.stringify(cond.dataRange);
+          }
+          if (Array.isArray(cond?.series) && cond.series.length >= 2) {
+            // Chỉ khôi phục nếu 2 cột cũ khác nhau (tránh lỗi trùng cột CLICK cũ)
+            if (cond.series[0].fieldId !== cond.series[1].fieldId) {
+              currentNumId = cond.series[0].fieldId;
+              currentDenId = cond.series[1].fieldId;
             }
           }
-          await dashboard.setRendered();
-        };
-
-        await updateDashboardView();
-        dashboard.onDataChange(ev => updateDashboardView(ev?.data));
-        dashboard.onConfigChange(() => updateDashboardView());
-        return;
+          if (saved?.customConfig?.title) {
+            currentTitle = String(saved.customConfig.title);
+          }
+        } catch (_) {}
       }
 
-      // ================= 2. CHẾ ĐỘ CẤU HÌNH (1-CLICK, KHÔNG CHỌN TRƯỜNG) =================
-      appEl.classList.add('is-config');
-      const { tableId, dataRange, presets } = await detectTAVBlocks(base, dashboard, SourceType);
+      titleInput.value = currentTitle;
+      tableSelect.value = currentTableId;
 
-      let selectedPreset = presets[0];
+      async function loadTableFieldsAndRanges(tableId, useSavedSelection) {
+        const [dataRanges, table] = await Promise.all([
+          dashboard.getTableDataRange(tableId),
+          base.getTableById(tableId)
+        ]);
+        const rawFields = await table.getFieldMetaList();
+        const numericFields = filterValidNumericFields(rawFields, FieldType);
 
-      async function renderSelectedPreset() {
-        if (!selectedPreset) return;
-        presetListEl.innerHTML = presets
-          .map(p => `
-            <div class="preset-item ${p.id === selectedPreset.id ? 'active' : ''}" data-id="${p.id}">
-              <div class="preset-title">
-                <span>${p.title}</span>
-                <span>${p.id === selectedPreset.id ? '✓ Đang chọn' : ''}</span>
-              </div>
-              <div class="preset-desc">${p.desc}</div>
-            </div>
-          `)
+        rangeSelect.innerHTML = dataRanges
+          .map(r => {
+            const label = r.type === (SourceType?.ALL || 'ALL') ? 'Tất cả dữ liệu' : `View: ${r.viewName || r.viewId}`;
+            return `<option value='${JSON.stringify(r)}'>${label}</option>`;
+          })
           .join('');
 
-        presetListEl.querySelectorAll('.preset-item').forEach(el => {
-          el.addEventListener('click', () => {
-            selectedPreset = presets.find(p => p.id === el.dataset.id) || presets[0];
-            renderSelectedPreset();
-          });
-        });
+        const fieldOptions = numericFields
+          .map(f => `<option value="${f.id}">${f.name}</option>`)
+          .join('');
+        numSelect.innerHTML = fieldOptions;
+        denSelect.innerHTML = fieldOptions;
 
-        const { numVal, denVal } = await fetchPairSum(
-          dashboard,
-          Rollup,
-          tableId,
-          dataRange,
-          selectedPreset.numFieldId,
-          selectedPreset.denFieldId
-        );
-        renderCard(numVal, denVal, selectedPreset.title);
+        const defaults = findBestDefaultFields(numericFields);
+        numSelect.value = defaults.adsFieldId;
+        denSelect.value = defaults.revFieldId;
+
+        if (useSavedSelection) {
+          if (currentRangeJson && [...rangeSelect.options].some(o => o.value === currentRangeJson)) {
+            rangeSelect.value = currentRangeJson;
+          }
+          if (currentNumId && numericFields.some(f => f.id === currentNumId)) {
+            numSelect.value = currentNumId;
+          }
+          if (currentDenId && numericFields.some(f => f.id === currentDenId)) {
+            denSelect.value = currentDenId;
+          }
+        }
       }
 
-      await renderSelectedPreset();
+      async function updatePreview() {
+        const tId = tableSelect.value;
+        const aId = numSelect.value;
+        const bId = denSelect.value;
+        const title = titleInput.value.trim() || 'TỶ LỆ QUẢNG CÁO';
+        if (!tId || !aId || !bId) return;
 
-      btnSave.addEventListener('click', async () => {
-        if (!selectedPreset) return;
-        btnSave.disabled = true;
-        btnSave.textContent = 'Đang lưu...';
-        const sumRollup = Rollup?.SUM || 'SUM';
+        let rangeObj = { type: SourceType?.ALL || 'ALL' };
+        try { rangeObj = JSON.parse(rangeSelect.value); } catch (_) {}
 
-        // LƯU Ý QUAN TRỌNG: Tuyệt đối KHÔNG truyền groups: [] để không bị lỗi "Nguồn dữ liệu đã thay đổi"
-        await dashboard.saveConfig({
-          dataConditions: [
-            {
-              tableId,
-              dataRange,
-              series: [
-                { fieldId: selectedPreset.numFieldId, rollup: sumRollup },
-                { fieldId: selectedPreset.denFieldId, rollup: sumRollup }
-              ]
-            }
-          ],
-          customConfig: {
-            title: selectedPreset.title,
-            presetId: selectedPreset.id
+        try {
+          const cond = createCondition(tId, rangeObj, aId, bId, Rollup, SourceType);
+          const pData = await dashboard.getPreviewData(cond);
+
+          if (Array.isArray(pData?.[1]) && pData[1].length >= 2) {
+            renderMetric(pData[1][0]?.value, pData[1][1]?.value, title);
+          } else {
+            // Nếu 2 cột trùng nhau hoặc cần lấy riêng lẻ
+            const sumRollup = Rollup?.SUM || 'SUM';
+            const [resA, resB] = await Promise.all([
+              dashboard.getPreviewData({ tableId: tId, dataRange: rangeObj, series: [{ fieldId: aId, rollup: sumRollup }] }),
+              dashboard.getPreviewData({ tableId: tId, dataRange: rangeObj, series: [{ fieldId: bId, rollup: sumRollup }] })
+            ]);
+            renderMetric(resA?.[1]?.[0]?.value, resB?.[1]?.[0]?.value, title);
           }
-        });
+        } catch (err) {
+          console.error('Preview error:', err);
+        }
+      }
+
+      await loadTableFieldsAndRanges(currentTableId, true);
+      await updatePreview();
+
+      tableSelect.addEventListener('change', async () => {
+        await loadTableFieldsAndRanges(tableSelect.value, false);
+        await updatePreview();
+      });
+      rangeSelect.addEventListener('change', updatePreview);
+      numSelect.addEventListener('change', updatePreview);
+      denSelect.addEventListener('change', updatePreview);
+      titleInput.addEventListener('input', () => {
+        labelEl.textContent = titleInput.value.trim() || 'TỶ LỆ QUẢNG CÁO';
+      });
+
+      saveBtn.addEventListener('click', async () => {
+        if (numSelect.value === denSelect.value) {
+          alert('Cột Tử số và Cột Mẫu số không được trùng nhau! Vui lòng chọn 2 cột khác nhau.');
+          return;
+        }
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Đang lưu...';
+        try {
+          let rangeObj = { type: SourceType?.ALL || 'ALL' };
+          try { rangeObj = JSON.parse(rangeSelect.value); } catch (_) {}
+
+          const condition = createCondition(
+            tableSelect.value,
+            rangeObj,
+            numSelect.value,
+            denSelect.value,
+            Rollup,
+            SourceType
+          );
+
+          await dashboard.saveConfig({
+            dataConditions: [condition],
+            customConfig: {
+              title: titleInput.value.trim() || 'TỶ LỆ QUẢNG CÁO'
+            }
+          });
+        } catch (err) {
+          alert('Lỗi khi lưu: ' + (err?.message || err));
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Xác nhận & Lưu cấu hình';
+        }
       });
     }
 
-    init();
+    // ================= CHẾ ĐỘ HIỂN THỊ TRÊN DASHBOARD (VIEW / FULLSCREEN) =================
+    async function initViewMode({ dashboard }) {
+      let title = 'TỶ LỆ QUẢNG CÁO';
+
+      async function renderFromDashboard(incomingData) {
+        try {
+          const cfg = await dashboard.getConfig();
+          if (cfg?.customConfig?.title) {
+            title = String(cfg.customConfig.title);
+          }
+        } catch (_) {}
+
+        let data = incomingData;
+        if (!Array.isArray(data) || data.length < 2) {
+          data = await dashboard.getData();
+        }
+
+        const adsVal = data?.[1]?.[0]?.value ?? 0;
+        const revVal = data?.[1]?.[1]?.value ?? 0;
+        renderMetric(adsVal, revVal, title);
+        await dashboard.setRendered();
+      }
+
+      await renderFromDashboard();
+
+      // Lắng nghe sự kiện đổi Slicer Filter (SHOP, THỜI GIAN NGÀY, THỜI GIAN) theo thời gian thực
+      dashboard.onDataChange(ev => renderFromDashboard(ev?.data));
+      dashboard.onConfigChange(() => renderFromDashboard());
+    }
+
+    main();
   </script>
 </body>
 </html>
